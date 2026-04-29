@@ -1,0 +1,140 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Subject Statistics{% endblock %}
+
+{% block template %}
+<div class="main container p-3">
+  {% comment %} <h3 class="mb-3 mt-2">📊 Subject Enrollment Statistics</h3> {% endcomment %}
+
+
+<div class="row align-items-end mb-4">
+
+  <!-- Filter Form -->
+  <form method="get" class="col-md-8">
+    <div class="row align-items-end">
+      <!-- Intake -->
+      <div class="col-md-4">
+        <select name="intake" class="form-select form-select-sm w-100 rounded-3 shadow-sm ">
+          <option value="">-- Select Intake --</option>
+          {% for year in intakes %}
+            <option value="{{ year }}" {% if year == selected_intake %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Form Level -->
+      <div class="col-md-4">
+        <select name="form_level" class="form-select form-select-sm w-100 rounded-3 shadow-sm">
+          <option value="">-- Select Level --</option>
+          {% for level in form_levels %}
+            <option value="{{ level }}" {% if level == selected_level %}selected{% endif %}>{{ level }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Submit -->
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-sm btnMain w-50 rounded-3 shadow">Apply Filters</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Download Button -->
+  <div class="col-md-4">
+    <form method="post" action="{% url 'export_subject_stats_pdf' %}" class="d-flex justify-content-end align-items-end">
+      {% csrf_token %}
+      <input type="hidden" name="intake" value="{{ selected_intake }}">
+      <input type="hidden" name="form_level" value="{{ selected_level }}">
+      <button type="submit" class="btn btn-sm btnPink rounded-5 shadow" title="Download">
+        <i class="fa fa-download" aria-hidden="true"></i>
+      </button>
+    </form>
+  </div>
+
+</div>
+
+  <!-- Total -->
+  <div class="mb-4">
+    <h6 class="text-muted fw-bold txt-main">Total Students: <strong>{{ total_students }}</strong></h6>
+  </div>
+  
+  <!-- Bar Chart -->
+    <div class="card shadow bg-white mb-5">
+        <div class="card-body text-center">
+            <label class="card-title text-warning fs-5 fw-bold">Subject Enrollment Bar Chart</label>
+            <div style="height: 400px;"> <!-- fixed height -->
+            <canvas id="subjectBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('subjectBarChart').getContext('2d');
+
+  const subjectNames = {{ subject_labels_json|safe }};
+  const percentages = {{ subject_percents_json|safe }};
+  const counts = {{ subject_counts_json|safe }};
+
+  // Pastel color palette (loop if subjects > colors)
+  const pastelColors = [
+    "#b9eddd", "#f9dcc4", "#cdb4db", "#b5ead7", "#f7b267", "#a0c4ff", "#b6e0fe",
+    "#f7d6e0", "#ffe29a", "#f6dfeb", "#e2f0cb", "#f1c6e7", "#b5ead7", "#b9fbc0"
+  ];
+  const backgroundColors = subjectNames.map((_, i) => pastelColors[i % pastelColors.length]);
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: subjectNames,
+      datasets: [{
+        label: 'Percentage of Students Taking Subject',
+        data: percentages,
+        backgroundColor: backgroundColors,
+        borderColor: backgroundColors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            callback: value => value + "%"
+          },
+          title: {
+            display: true,
+            text: "Percentage"
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Subjects"
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const count = counts[ctx.dataIndex];
+              return `${count} student${count !== 1 ? 's' : ''} taking this subject`;
+            }
+          }
+        },
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

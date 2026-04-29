@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; font-size: 12px; 
+        }
+
+        h2 { 
+            color: #2c3e50; text-align: center; 
+        }
+
+        .result-box { 
+            border: 1px solid #aaa; padding: 15px; margin-top: 20px; 
+        }
+
+        .risk { 
+            color: #e74c3c; font-weight: bold; 
+        }
+
+        .not-risk { 
+            color: #27ae60; font-weight: bold; 
+        }
+
+        .info { 
+            font-size: 11px; color: #555; margin-top: 5px; 
+        }
+
+        table { 
+            width: 100%; border-collapse: collapse; margin-top: 15px; 
+        }
+
+        th, td { 
+            border: 1px solid #999; padding: 8px; text-align: center; 
+        }
+
+        th { 
+            background-color: #f2f2f2; 
+        }
+
+        .break { 
+            page-break-before: always; 
+        }
+
+        .table { 
+            width: 100%; border-collapse: collapse; margin-bottom: 30px;
+        }
+
+        .table th, .table td { 
+            border: 1px solid #ccc; padding: 7px 12px; 
+        }
+
+        .table th { 
+            background: #f5f5f5; 
+        }
+    </style>
+</head>
+<body>
+    <h2>📋 Student Risk Prediction Summary</h2>
+
+    <p><strong>Name:</strong> {{ student.full_name }}</p>
+    <p><strong>Matric Number:</strong> {{ student.number_matric_std }}</p>
+    <p><strong>Exam Type:</strong> {{ exam_type }}</p>
+    <p><strong>Average Score:</strong> {{ percent|floatformat:2 }}%</p>
+
+    <h4 style="margin-top: 30px;">Subject Result Table</h4>
+    <table class="table">
+        <tr>
+            <th>Subject</th>
+            <th>Marks</th>
+            <th>Grade</th>
+            <th>Description</th>
+        </tr>
+        {% for m in marks_with_grades %}
+        <tr>
+            <td>{{ m.subject.name }}</td>
+            <td>{{ m.marks }}</td>
+            <td>{{ m.gred }}</td>
+            <td>{{ m.desc }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if subject_failures or grade_summary %}
+        <table class="table w-auto" style="margin-top:10px;">
+        <thead style="background:#ffe082;">
+            <tr>
+            <th class="text-center" style="color:#222;">Status</th>
+            <th class="text-center" style="color:#222;">Total Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+            <td class="text-center">
+                {% if subject_failures %}
+                ❌ Failed ({{ subject_failures|length }})
+                {% else %}
+                ✅ Passed
+                {% endif %}
+            </td>
+            <td class="text-center">
+                {% for grade, count in grade_summary.items %}
+                {{ count }}{{ grade }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            </tr>
+        </tbody>
+        </table>
+    {% endif %}
+
+    <div class="break"></div>
+
+    <div style="border: 1px solid #eee; padding: 18px; border-radius: 8px; margin-bottom: 30px;">
+        {% if prediction_result == "Risk" %}
+            <p style="font-size:1.3em; color:#d9534f; font-weight:bold;">⚠️ Student is at <u>Risk</u>.</p>
+        {% elif prediction_result == "Not Risk" %}
+            <p style="font-size:1.3em; color:#28a745; font-weight:bold;">✅ Student is <u>Not at Risk</u>.</p>
+        {% else %}
+            <p style="color:#888;">Prediction unavailable: {{ prediction_result }}</p>
+        {% endif %}
+
+        <!-- Exam-specific summary (like modal, for the selected exam) -->
+        {% for t in trends %}
+            {% if t.exam == exam_type %}
+                <div style="margin-top: 10px;">
+                    <p style="font-weight: bold; margin-bottom: 3px;">
+                        {{ t.exam }}:
+                        <span style="color:{% if t.risk == 'Risk' %}#d9534f{% else %}#28a745{% endif %};">
+                            {{ t.risk }}
+                        </span>
+                        <span style="color:#888; font-size:0.95em;">({{ t.score }}%)</span>
+                    </p>
+                    <p style="color:#333; font-size:0.98em; margin-bottom: 0;">{{ t.trend }}</p>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        {% if pdf_factor_text %}
+        <p class="info" style="color:#1976d2;">{{ pdf_factor_text }}</p>
+        {% endif %}
+
+        <!-- Risk Score & Recommendations -->
+        {% if risk_score is not None %}
+            <p style="margin-top:10px; color:#5e35b1; font-weight:bold;">Predicted Risk Score: {{ risk_score|floatformat:2 }}%</p>
+            {% if "Final" not in exam_type %}
+                {% if percent < 50 %}
+                    <p style="color:#e65100; margin-bottom:0;">⚠️ This student has a high chance of failure if no intervention is done.</p>
+                {% elif percent >= 50 and percent < 60 %}
+                    <p style="color:#0277bd; margin-bottom:0;">⚠️ Moderate risk — recommend attention.</p>
+                {% elif percent >= 60 %}
+                    <p style="color:#388e3c; margin-bottom:0;">✅ Low risk — performance is satisfactory.</p>
+                {% endif %}
+            {% else %}
+                <p style="color:#007bff; margin-bottom:0;">Final Exam evaluated. No further intervention message required.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 30px;">
+        <div style="background: #e3f2fd; border-left: 5px solid #1976d2; padding: 10px 18px; margin-bottom: 10px;">
+            <b>Performance Trend:</b><br>
+            {{ trend_summary }}
+        </div>
+        {% if graph_image %}
+            <h3 style="margin-top: 25px; text-align: center; font-size: 1.2em; color:#333;">Key Personal Indicators (Graph)</h3>
+            <div style="text-align: center; margin-top: 15px;">
+                <img src="data:image/png;base64,{{ graph_image }}" style="max-width: 98%; height: auto; border: 1px solid #ddd; border-radius:6px;" />
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,280 @@
+{% extends "base_admin.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    
+    <h1>Teacher Information</h1>
+
+    <div class="p-2 " style="max-height: 490px; overflow-y: auto; overflow-x: hidden;">
+          
+            <form method="post" enctype="multipart/form-data" id="teacherForm">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>There were errors in your form:</strong>
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}</strong>: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div>
+                  <!-- Professional Assignment -->
+                  <div class="p-3 mb-4 rounded bg-white shadow" >
+                      <label class="txt-main fw-bold fs-5">Assigned Class</label>
+                      <div class="row fw-bold txt-org">
+                        <div class="col-md-4 mb-3">{{ form.intake.label_tag }} {{ form.intake|add_class:"form-select" }}</div>
+                          {% comment %} <div class="col-md-4 mb-3">
+                            {{ form.form_level.label_tag }}
+                            {{ form.form_level|add_class:"form-select" }}
+                          </div> {% endcomment %}
+                          <div class="col-md-4 mb-3">
+                            
+                              <label for="assigned-class">Assigned Class</label>
+                              <select name="assigned_class" id="assigned-class" class="form-select">
+                              <option value="">-- Select Class --</option>
+                              {% for classroom in classrooms %}
+                                <option value="{{ classroom.id }}" data-form="{{ classroom.form_level }}"
+                                  {% if form.instance.assigned_class and form.instance.assigned_class.id == classroom.id %}
+                                    selected
+                                  {% endif %}>
+                                  {{ classroom.name }}
+                                </option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          
+                      </div>
+                  </div>
+
+                  <!-- Basic Information -->
+                  <div class="p-3 mb-4 rounded bg-white shadow txt-main">
+                      <label class="txt-main fw-bold fs-5">Basic Information</label>
+                      <div class="row fw-bold txt-org">
+                          <div class="col-md-4 mb-3">{{ form.profile_picture.label_tag }} {{ form.profile_picture|add_class:"form-control" }}</div>
+                          <div class="col-md-4 mb-3">{{ form.name.label_tag }} {{ form.name|add_class:"form-control" }}</div>
+                          <div class="col-md-4 mb-3">{{ form.race.label_tag }} {{ form.race|add_class:"form-select" }}</div>
+                          <div class="col-md-4 mb-3">{{ form.gender.label_tag }} {{ form.gender|add_class:"form-select" }}</div>
+                          <div class="col-md-4 mb-3">{{ form.ic_number.label_tag }} {{ form.ic_number|add_class:"form-control" }}</div>
+                          <div class="col-md-4 mb-3">{{ form.age.label_tag }} {{ form.age|add_class:"form-control" }}</div>
+                      </div>
+                  </div>
+
+                  <!-- Contact Information -->
+                  <div class="p-3 mb-4 rounded bg-white shadow txt-main">
+                      <label class="txt-main fw-bold fs-5">Contact Information</label>
+                      <div class="row  fw-bold txt-org">
+                          <div class="col-md-6 mb-3">{{ form.email.label_tag }} {{ form.email|add_class:"form-control" }}</div>
+                          <div class="col-md-6 mb-3">{{ form.phone_number.label_tag }} {{ form.phone_number|add_class:"form-control" }}</div>
+                      </div>
+                      <div class="mb-3 fw-bold txt-org">{{ form.address.label_tag }} {{ form.address|add_class:"form-control" }}</div>
+                  </div>
+
+                  <!-- Login Details -->
+                  <div class="p-3 mb-4 rounded bg-white shadow txt-main">
+                      <label class="txt-main fw-bold fs-5">Login Details</label>
+                      <div class="row fw-bold txt-org">
+                          <div class="col-md-4 mb-3">{{ form.username.label_tag }} {{ form.username|add_class:"form-control" }}</div>
+                           {% comment %} <div class="col-md-4 mb-3">
+                            {{ form.password.label_tag }} 
+                            {{ form.password|add_class:"form-control" }}
+                            <div class="form-text ">For security reasons, please re-enter the password to save any changes</div>
+                          </div>
+                          <div class="col-md-4 mb-3">
+                            {{ form.confirm_password.label_tag }} 
+                            {{ form.confirm_password|add_class:"form-control" }}
+                          </div>  {% endcomment %}
+                      </div>
+                  </div>  
+
+                      <!-- Subjects (Full Width) -->
+                  <div class="p-3 rounded bg-white shadow mb-3">     
+                      <div class="mb-3">
+                          <label class="txt-main fw-bold fs-5">Assigned Subject</label>
+                          <div id="subject-container"  class="txt-org fw-bold fs-6"></div>
+                          <button type="button" class="btn btn-sm btn-warning mt-2 fw-bold" id="add-subject">+ Add Subject</button>
+                      </div>
+                  </div>
+                </div>
+    </div>
+
+                  <!-- Submit -->
+                  <div class="row justify-content-between align-items-center mt-3">
+                      <div class="col-auto">
+                        {% if teacher %}
+                          <a class="btn btn-outline-main" href="{% url 'manageTeach' %}">Back</a>
+                        {% endif %}
+                      </div>
+
+                      <!-- Register Button on the Right -->
+                      <div class="col-auto">
+                        <button type="button" class="btn btnMain mt-3" data-bs-toggle="modal" data-bs-target="#confirmSaveModal">
+                          Save Changes
+                      </button>
+                      </div>
+                  </div>
+              </form>
+
+               <!-- Confirm Modal -->
+                <div class="modal fade" id="confirmSaveModal" tabindex="-1" aria-labelledby="confirmSaveModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content border-success">
+                            <div class="modal-header">
+                                <h5 class="modal-title text-success">Confirm Save</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to save the changes for this teacher?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-main" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-success" form="teacherForm">Yes, Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content border-success">
+                      <div class="modal-header">
+                        <h5 class="modal-title text-success" id="successModalLabel">✅ Changes Saved</h5>
+                      </div>
+                      <div class="modal-body">
+                        This teacher have been successfully saved!
+                      </div>
+                    </div>
+                  </div>
+              </div>
+                
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let subjectIndex = 0;
+    const container = document.getElementById("subject-container");
+
+    const subjectPairs = {{ subject_pairs|safe }};
+    const formLevels = {{ form_levels|safe }};
+    const subjectOptionsByForm = {
+      {% for level in form_levels %}
+        "{{ level }}": [
+          {% for subject in subjects %}
+            {% if subject.form_level == level %}
+              { id: {{ subject.id }}, name: "{{ subject.name }}" },
+            {% endif %}
+          {% endfor %}
+        ],
+      {% endfor %}
+    };
+
+    function createSubjectRow(index, selectedFormLevel = "Form 1", selectedSubjectId = null) {
+      const row = document.createElement("div");
+      row.classList.add("row", "mb-2", "subject-group");
+
+      const formLevelOptions = formLevels.map(level =>
+        `<option value="${level}" ${level === selectedFormLevel ? "selected" : ""}>${level}</option>`
+      ).join("");
+
+      const subjects = subjectOptionsByForm[selectedFormLevel] || [];
+      const subjectOptions = subjects.map(sub =>
+        `<option value="${sub.id}" ${sub.id == selectedSubjectId ? "selected" : ""}>${sub.name}</option>`
+      ).join("");
+
+      row.innerHTML = `
+        <div class="col-md-4">
+          <label>Form Level</label>
+          <select class="form-select form-level" name="form_level_${index}" data-index="${index}">
+            ${formLevelOptions}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label>Subject</label>
+          <select class="form-select subject-select" name="subject_${index}">
+            ${subjectOptions}
+          </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-danger remove-subject">−</button>
+        </div>
+      `;
+
+      return row;
+    }
+
+    function updateSubjectDropdown(row, selectedFormLevel) {
+      const select = row.querySelector(".subject-select");
+      const subjects = subjectOptionsByForm[selectedFormLevel] || [];
+
+      select.innerHTML = subjects.map(sub =>
+        `<option value="${sub.id}">${sub.name}</option>`
+      ).join("");
+    }
+
+    // Prefill from backend
+    if (subjectPairs.length > 0) {
+      subjectPairs.forEach(pair => {
+        const row = createSubjectRow(subjectIndex, pair.form_level, pair.subject_id);
+        container.appendChild(row);
+        subjectIndex++;
+      });
+    } else {
+      // If no existing, create one empty row
+      const row = createSubjectRow(subjectIndex);
+      container.appendChild(row);
+      subjectIndex++;
+    }
+
+    // Add new subject
+    document.getElementById("add-subject").addEventListener("click", () => {
+      const row = createSubjectRow(subjectIndex);
+      container.appendChild(row);
+      subjectIndex++;
+    });
+
+    // Update subject list on form level change
+    container.addEventListener("change", function (e) {
+      if (e.target.classList.contains("form-level")) {
+        const row = e.target.closest(".subject-group");
+        const selectedLevel = e.target.value;
+        updateSubjectDropdown(row, selectedLevel);
+      }
+    });
+
+    // Remove subject row
+    container.addEventListener("click", function (e) {
+      if (e.target.classList.contains("remove-subject")) {
+        e.target.closest(".subject-group").remove();
+      }
+    });
+  });
+</script>
+
+
+{% if show_success %}
+<script>
+  window.addEventListener("load", function () {
+    const modal = new bootstrap.Modal(document.getElementById("successModal"));
+    modal.show();
+    setTimeout(() => modal.hide(), 3000);
+  });
+</script>
+{% endif %} 
+
+{% endblock %}
+
+
+

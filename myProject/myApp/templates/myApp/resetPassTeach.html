@@ -1,0 +1,71 @@
+{% extends "base_admin.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    <h1>Reset Teacher Password</h1>
+    <ul class="nav nav-tabs pt-2">
+        <li class="nav-item">
+            <a class="nav-link txt-main1 bg-purp-faded2" href="{% url 'manageTeach' %}">Record</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link txt-main1 bg-purp-faded" href="{% url 'newTeach' %}">New Teacher</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active bg-main shadow-sm fw-bold" aria-current="page" href="{% url 'resetPassTeach' %}">Reset Password</a>
+        </li>
+    </ul>  
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-success mt-3">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="p-2 bg-white mt-3 rounded-3 shadow">
+                <div class="p-2">
+                    <!-- ✅ Combined Row: Search + Password + Confirm -->
+                    <div class="row">
+                        <!-- Search Teacher -->
+                        <div class="col-md-4 mb-3">
+                            <label for="teacher-search" class="form-label fw-bold txt-org">Search Teacher by Username</label>
+                            <input class="form-control" list="teacherOptions" name="teacher_search" id="teacher-search" placeholder="Type teacher username..." required>
+                            <datalist id="teacherOptions">
+                            {% for user in unique_teachers %}
+                                <option value="{{ user.username }}">{{ user.teacher_profile.name }}</option>
+                            {% endfor %}
+                            </datalist>
+                        </div>
+
+                        <!-- New Password -->
+                        <div class="col-md-4 mb-3 txt-org">
+                            <label for="new_password" class="form-label fw-bold">New Password</label>
+                            <input type="password" name="new_password" class="form-control" id="new_password" required>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-4 mb-3 txt-org">
+                            <label for="confirm_password" class="form-label fw-bold">Confirm Password</label>
+                            <input type="password" name="confirm_password" class="form-control" id="confirm_password" required>
+                        </div>
+                    </div>
+
+                        <!-- Submit Button -->
+                    <button type="submit" class="btn btnMain shadow-sm">Update Password</button>
+                </div>
+                
+            </div>
+        </form>
+</div>
+
+{% endblock %}
+

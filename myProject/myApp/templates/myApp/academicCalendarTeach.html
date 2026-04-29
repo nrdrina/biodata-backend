@@ -1,0 +1,111 @@
+{% extends 'base_teacher.html' %}
+{% load static %}
+{% block template %}
+<div class="main p-4">
+    
+    <div class="container-fluid p-2">
+
+        <!-- Top: Search Bar -->
+        <div class="d-flex bd-highlight">
+            <div class="p-2 flex-grow-1 fw-bold fs-5 txt-main">Annoucement</div>
+            <input id="fileSearch" type="text" class="form-control w-25 h-25 shadow-sm" placeholder="Search files...">
+        </div>
+        <div class="d-flex justify-content-end mb-3">
+            
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+            <div class="card shadow rounded-3 p-3 mb-3">
+                <label class="fw-bold txt-secondary fs-6 mb-2">Total Uploaded By Admin</label>
+                <canvas id="file_types" height="200"></canvas>
+            </div>
+            </div>
+
+            <div class="col-md-8" style="max-height: 75vh; overflow-y: auto;">
+            <div id="fileList">
+                {% for file in files %}
+                <div class="card mb-3 shadow-sm rounded-3 file-card txt-org" data-title="{{ file.title|lower }}">
+                <div class="row g-0">
+                    
+                    <div class="col-md-4 p-2">
+                    {% if file.is_pdf %}
+                        <iframe src="{{ file.file.url }}" width="100%" height="100px" class="rounded-2 border"></iframe>
+                    {% elif file.is_image %}
+                        <img src="{{ file.file.url }}" style="width:200px; height:100px;" class="img-fluid rounded-2 border" alt="{{ file.title }}">
+                    {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-md-8 p-2">
+                    <h6 class="fw-bold mb-1">{{ file.title }}</h6>
+                    <p class="text-muted small mt-2 fw-bold">Uploaded: {{ file.uploaded_at|date:"d M Y H:i" }}</p>
+                    <div class="d-flex gap-2">
+                        {% if file.is_pdf or file.is_image %}
+                        <a href="{{ file.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">View</a>
+                        {% endif %}
+                        <a href="{{ file.file.url }}" download class="btn btn-sm btnMain"><i class="fa fa-download" aria-hidden="true"></i></a>
+                    </div>
+                    </div>
+
+                </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No academic calendars available.</p>
+                {% endfor %}
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+  document.getElementById('fileSearch').addEventListener('input', function () {
+    const searchValue = this.value.toLowerCase();
+    const cards = document.querySelectorAll('.file-card');
+
+    cards.forEach(card => {
+      const title = card.getAttribute('data-title');
+      if (title.includes(searchValue)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+</script>
+<script>
+  const typeCounts = {{ type_counts|safe }};
+
+  const labels = Object.keys(typeCounts);
+  const data = Object.values(typeCounts);
+
+  const ctx = document.getElementById('file_types').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut', // or pie or bar
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'File Count',
+        data: data,
+        backgroundColor: [
+          'rgb(128, 72, 240)',
+          'rgb(255, 99, 133)',
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(255, 206, 86, 0.7)',
+          'rgba(75, 192, 192, 0.7)'
+          
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

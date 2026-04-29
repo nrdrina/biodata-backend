@@ -1,0 +1,71 @@
+body {
+    background-image: url("../images/building-school.jpg");
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(121, 113, 130, 0.916); /* This creates the faded layer */
+    z-index: 1;
+}
+
+.login-container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    z-index: 2;
+}
+
+.profile-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 20px;
+    display: block;
+    border: 5px solid #ffffff;
+}
+
+.input-group-text {
+    background-color: #ffffff;
+    border-right: none;
+    border-color: #4951596b;
+}
+
+.form-control {
+    border-left: none;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #4951596b;
+}
+
+.btn-login {
+    background-color: #45115b;
+    color: white;
+    width: 100%;
+    padding: 10px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    background-color: #cc00ff;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(240, 34, 255, 0.4);
+}

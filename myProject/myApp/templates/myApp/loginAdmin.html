@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="overlay"></div>
+    <div class="login-container shadow-lg">
+        <h1 class="text-center">Admin</h1>
+          <form method="post">
+            {% csrf_token %}
+            <div class="text-center mb-4">
+                {% if profile_image_url %}
+                    <img src="{{ profile_image_url }}" alt="Admin Icon" class="img-fluid rounded-circle shadow" style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'images/default-avatar.png' %}" alt="Default Avatar" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                {% endif %}
+            </div>
+              <div class="input-group mb-3 shadow">
+                  <span class="input-group-text">
+                      <i class="fas fa-user"></i>
+                  </span>
+                  <input type="text" class="form-control"  name="username" id="username" placeholder="Username" required>
+              </div>
+              <div class="input-group mb-4 shadow">
+                  <span class="input-group-text">
+                      <i class="fas fa-lock"></i>
+                  </span>
+                  <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+              </div>
+              <button type="submit" class="btn btn-login mb-3">LOGIN</button>
+              {% if error %}
+                <div class="alert alert-danger ">{{ error }}</div>
+              {% endif %}
+          </form>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}
+
+

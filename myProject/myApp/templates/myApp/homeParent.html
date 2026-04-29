@@ -1,0 +1,239 @@
+{% extends 'base_parent.html' %}
+{% block title %}Parent Dashboard{% endblock %}
+
+{% block template %}
+<div class="main p-4" style="overflow-y: hidden;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+    <h3 class="fw-bold mb-0 txt-main">Welcome {{ request.user.username|default:"ParentProfile" }}</h3>
+    <form method="get" class="d-flex align-items-center gap-2">
+      <select name="child" class="form-select w-auto shadow-sm" onchange="this.form.submit()">
+        {% for profile in linked_profiles %}
+          <option value="{{ profile.student.id }}" {% if selected_child and selected_child.id == profile.student.id %}selected{% elif not selected_child and forloop.first %}selected{% endif %}>
+            {{ profile.student.full_name }} ({{ profile.student.number_matric_std }})
+          </option>
+        {% endfor %}
+      </select>
+      <button type="button" class="btn btnMain shadow-sm" data-bs-toggle="modal" data-bs-target="#requestModal" title="Add Child">
+        <i class="fa fa-plus-square" aria-hidden="true"></i>
+      </button>
+    </form>
+  </div>
+
+  <div class="row g-2" style="min-height: 480px;">
+    <div class="col-md-8 d-flex flex-column gap-2">
+      <div class="d-flex gap-2 align-items-stretch" style="min-height: 200px;">
+        <div class="flex-fill" style="min-width:0;">
+          {% if selected_child %}
+          <div class="card shadow p-3 rounded-3 h-100">
+            <label class="fw-bold fs-5 text-warning">Student Details</label>
+            <table class="table table-borderless mt-1">
+              <tr><th>Name:</th><td>{{ selected_child.full_name }}</td></tr>
+              <tr><th>Matric:</th><td>{{ selected_child.number_matric_std }}</td></tr>
+              <tr><th>Intake:</th><td>{{ selected_child.intake }}</td></tr>
+              <tr><th>Form:</th><td>{{ selected_child.student_class.form_level }}</td></tr>
+              <tr><th>Class:</th><td>{{ selected_child.student_class.name }}</td></tr>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+        <div class="flex-fill" style="min-width:0;">
+          <div class="card shadow p-3 rounded-3 h-100 d-flex flex-column">
+            <label class="fw-bold text-warning fs-5">Attendance Overview</label>
+            <div class="flex-grow-1 d-flex justify-content-center align-items-center" style="height: 140px;">
+              <canvas id="attendanceChart" style="max-width:100%; max-height:200px;"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="height: 220px; min-height: 200px;">
+        <div class="card shadow p-3 rounded-3 h-100">
+          <label class="fw-bold text-warning fs-5">Login Activity</label>
+          <canvas id="loginChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow p-3 rounded-3 h-100 d-flex flex-column" style="min-height: 440px;">
+        <div class="d-flex justify-content-end align-items-center mb-2">
+          <div class="dropdown">
+            <button class="btn dropdown-toggle btnMain shadow-sm fw-bold" type="button" id="examDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              {{ selected_exam_type|default:"– Select Exam Type –" }}
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="examDropdown">
+              {% for et in exam_types %}
+                <li><a class="dropdown-item" href="?child={{ selected_child.id }}&exam_type={{ et }}">{{ et }}</a></li>
+              {% empty %}
+                <li><span class="dropdown-item disabled">No Exams</span></li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="flex-grow-1 d-flex align-items-center">
+          <canvas id="examChart" height="320" style="width: 100%;"></canvas>
+        </div>
+        <div class="mt-3 d-flex justify-content-end">
+          {% if grade_summary or subject_failures %}
+          <table class="table table-bordered table-sm w-auto mb-0 rounded-3 align-self-end" style="min-width: 280px;">
+            <thead class="table-light">
+              <tr>
+                <th class="bg-warning text-center text-muted" style="width: 90px;">Status</th>
+                <th class="bg-warning text-center text-muted" style="width: 90px;">Total Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-center text-muted">
+                  {% if subject_failures %}
+                    ❌ Failed ({{ subject_failures|length }})
+                  {% else %}
+                    ✅ Passed
+                  {% endif %}
+                </td>
+                <td class="text-center text-muted">
+                  {% for grade, count in grade_summary.items %}
+                    {{ count }}{{ grade }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+ 
+  <a href="{% url 'parent_logout' %}" class="btn btnMain shadow rounded-circle position-fixed" style="bottom: 20px; left: 20px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+    <i class="fa fa-sign-out"></i>
+  </a>
+</div>
+
+<div class="modal fade" id="requestModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'request_child_add' %}" id="childRequestForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Request to Add Child</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label>Full Name</label>
+          <input type="text" name="full_name" class="form-control" required>
+          <label class="mt-2">Matric Number</label>
+          <input type="text" name="matric" class="form-control" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btnMain">Send Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="toastSuccess" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        ✅ Your request has been sent to the admin.
+      </div>
+    </div>
+  </div>
+</div>
+{% if request.GET.toast == "child_request" %}
+  <script>
+    window.addEventListener("load", function () {
+      const toast = new bootstrap.Toast(document.getElementById('toastSuccess'));
+      toast.show();
+    });
+  </script>
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const attendanceData = {{ attendance_data_json|safe }};
+  const chartLabels = {{ chart_labels_json|safe }};
+  const chartData = {{ chart_data_json|safe }};
+  const barColors = {{ bar_colors_json|safe }};
+  const loginData = {{ login_chart_json|safe }};
+
+  new Chart(document.getElementById('attendanceChart'), {
+    type: 'pie',
+    data: {
+      labels: attendanceData.labels,
+      datasets: [{
+        data: attendanceData.values,
+        backgroundColor: ['#f44336', '#4caf50']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('examChart'), {
+  type: 'bar',
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: 'Mark',
+        data: chartData,
+        backgroundColor: barColors,
+        borderColor: barColors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          title: { display: true, text: "Mark" }
+        },
+        x: {
+          title: { display: true, text: "" }
+        }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('loginChart'), {
+    type: 'bar',
+      data: {
+        labels: loginData.labels,
+        datasets: [{
+          label: 'Logins',
+          data: loginData.values,
+          backgroundColor: 'rgba(255, 159, 64, 0.5)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            suggestedMax: 10,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
+
+  document.getElementById("childRequestForm")?.addEventListener("submit", function (e) {
+    setTimeout(() => {
+      const toast = new bootstrap.Toast(document.getElementById('toastSuccess'));
+      toast.show();
+    }, 2000);
+  });
+</script>
+{% endblock %}

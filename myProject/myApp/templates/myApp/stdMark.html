@@ -1,0 +1,53 @@
+<!-- student_marks.html -->
+
+
+{% extends "base_teacher.html" %}
+{% load static %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    <form method="get">
+        <select name="exam_type">
+            <option value="1st Exam" {% if exam_type == '1st Exam' %}selected{% endif %}>1st Exam</option>
+            <option value="Midterm" {% if exam_type == 'Midterm' %}selected{% endif %}>Midterm</option>
+            <option value="Final" {% if exam_type == 'Final' %}selected{% endif %}>Final</option>
+        </select>
+        <button type="submit">View</button>
+    </form>
+    
+    <table>
+        <tr>
+            <th>Subject</th>
+            <th>Score</th>
+        </tr>
+        {% for mark in marks %}
+        <tr>
+            <td>{{ mark.subject.name }}</td>
+            <td>{{ mark.score }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td><strong>Total Percentage</strong></td>
+            <td><strong>{{ percentage }}%</strong></td>
+        </tr>
+    </table>
+    <button id="predict-btn">Predict Performance</button>
+    <div id="prediction-result"></div>
+    
+    <script>
+    document.getElementById('predict-btn').addEventListener('click', function() {
+        fetch("{% url 'predict_student_performance' student.id %}")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('prediction-result').innerText = "Prediction: " + data.prediction;
+            });
+    });
+    </script>
+</div>
+
+{% endblock %}
+
+

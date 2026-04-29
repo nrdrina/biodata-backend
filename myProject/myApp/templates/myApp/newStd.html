@@ -1,0 +1,200 @@
+{% extends "base_admin.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    <h1>Register New Student</h1>
+    <ul class="nav nav-tabs pt-2">
+      <li class="nav-item">
+        <a class="nav-link txt-main1 bg-purp-faded" aria-current="page" href="{% url 'manageStd' %}">Record</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active bg-main fw-bold" href="{% url 'newStd' %}">New Student</a>
+      </li>
+    </ul>
+
+    <div class="pt-2">
+      {% if class_full %}
+        <div class="alert alert-warning">⚠ This class is already full (max 38 students).</div>
+      {% endif %}
+
+      {% if form.errors.subjects %}
+        <div class="alert alert-warning">
+          ⚠ Please select at least one subject.
+        </div>
+      {% endif %}
+       {% if form.errors %}
+        <div class="alert alert-danger">
+            <strong>There were errors in your form:</strong>
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}</strong>: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="p-2" style="max-height: 450px; overflow-y: auto; overflow-x: hidden;">
+            <!-- Personal Information -->
+            <div class="p-3 mb-4 rounded bg-white shadow txt-main">
+                <h5 class="fw-bold">Personal Information</h5>
+                <div class="row text-warning fw-bold">
+                    <div class="col-md-4 mb-3">{{ form.full_name.label_tag }} {{ form.full_name|add_class:"form-control" }}</div>
+                    <div class="col-md-4 mb-3">{{ form.nickname.label_tag }} {{ form.nickname|add_class:"form-control" }}</div>
+                    <div class="col-md-4 mb-3">{{ form.gender.label_tag }} {{ form.gender|add_class:"form-select" }}</div>
+                    <div class="col-md-4 mb-3">{{ form.race.label_tag }} {{ form.race|add_class:"form-select" }}</div>
+                    <div class="col-md-4 mb-3">{{ form.age.label_tag }} {{ form.age|add_class:"form-control" }}</div>
+                    <div class="col-md-4 mb-3">{{ form.ic_number.label_tag }} {{ form.ic_number|add_class:"form-control" }}</div>
+                    <div class="col-md-12 mb-3">
+                        {{ form.address.label_tag }}
+                        {{ form.address|add_class:"form-control" }} 
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Assignment -->
+            <div class="p-3 mb-4 rounded bg-white shadow txt-main">
+                <h5 class="fw-bold">Academic Assignment</h5>
+
+                <input type="hidden" name="collected_subjects" id="collected-subjects">
+
+                <div class="row fw-bold text-warning">
+                  <!-- Assign Teacher -->
+                    <div class="col-md-4 mb-3">
+                        <label for="teacher-search" class="form-label">Assign Teacher</label>
+                        <input type="text" id="teacher-search" name="teacher" class="form-control" list="teacherOptions" placeholder="Search by name or class" required>
+                        <datalist id="teacherOptions">
+                          {% for t in teachers %}
+                            {% if t.assigned_class %}
+                              <option value="{{ t.name }} ({{ t.assigned_class }})"></option>
+                            {% endif %}
+                          {% endfor %}
+                        </datalist>
+                        <input type="hidden" name="teacher_id" id="selected-teacher-id">
+                        <input type="hidden" name="form_level" id="teacher-form-level">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Intake</label>
+                        {{ form.intake|add_class:"form-select" }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Subjects Taken:</label>
+                        <div class="row" id="subject-checkboxes"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guardian Information -->
+            <div class="p-3 rounded bg-white shadow txt-main mb-2">
+                <h5 class="fw-bold">Guardian Information</h5>
+                <div class="row text-warning fw-bold">
+                  <div class="col-md-4 mb-3">{{ form.guardian_name.label_tag }} {{ form.guardian_name|add_class:"form-control" }}</div>
+                  <div class="col-md-4 mb-3">{{ form.guardian_contact.label_tag }} {{ form.guardian_contact|add_class:"form-control" }}</div>
+                  <div class="col-md-4 mb-3">{{ form.guardian_email.label_tag }} {{ form.guardian_email|add_class:"form-control" }}</div>
+                </div>
+            </div>
+          </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btnMain mt-3">Register Student</button>
+            <div class="modal" tabindex="-1" id="successModal">
+                <div class="modal-dialog">
+                <div class="modal-content border-success">
+                    <div class="modal-header">
+                    <h5 class="modal-title text-success">🎉 Registration Successful</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    <p>The student has been successfully registered and saved to the system!</p>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btnMain" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </form>
+      </div>
+</div>
+
+
+<script>
+const teacherMap = {{ teacher_subject_map|safe }};
+const groupedSubjects = {{ grouped_subjects|safe }};
+const subjectWrapper = document.getElementById("subject-checkboxes");
+const teacherInput = document.getElementById("teacher-search");
+const hiddenId = document.getElementById("selected-teacher-id");
+const hiddenFormLevel = document.getElementById("teacher-form-level");
+const collectedSubjectsInput = document.getElementById("collected-subjects");
+
+function updateSubjectOptions(formLevel) {
+  const subjects = groupedSubjects[formLevel] || [];
+  subjectWrapper.innerHTML = "";
+
+  const collected = [];
+
+  subjects.forEach((subject, index) => {
+    const col = document.createElement("div");
+    col.className = "col-md-4";
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = "subjects"; 
+    input.value = subject.id;
+    input.className = "form-check-input subject-dynamic";
+
+    const label = document.createElement("label");
+    label.className = "form-check-label ms-1";
+    label.textContent = subject.name;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "form-check";
+    wrapper.appendChild(input);
+    wrapper.appendChild(label);
+    col.appendChild(wrapper);
+    subjectWrapper.appendChild(col);
+  });
+}
+
+document.querySelector("form").addEventListener("submit", function () {
+  const selected = Array.from(document.querySelectorAll(".subject-dynamic:checked"))
+    .map(input => input.value);
+  collectedSubjectsInput.value = selected.join(",");
+});
+
+teacherInput.addEventListener("change", () => {
+  const selected = teacherMap[teacherInput.value.trim()];
+  if (selected) {
+    hiddenId.value = selected.id;
+    hiddenFormLevel.value = selected.form_level;
+    updateSubjectOptions(selected.form_level);
+  } else {
+    hiddenId.value = "";
+    hiddenFormLevel.value = "";
+    subjectWrapper.innerHTML = "";
+  }
+});
+</script>
+
+{% if success %}
+    <script>
+      window.addEventListener("load", () => {
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+      });
+    </script>
+{% endif %}  
+
+
+{% endblock %}

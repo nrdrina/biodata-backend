@@ -1,0 +1,23 @@
+<h3>Subject Statistics Report</h3>
+<p>Intake: {{ intake }}</p>
+<p>Form Level: {{ form_level }}</p>
+<p>Total Students: {{ total_students }}</p>
+
+<table border="1" cellspacing="0" cellpadding="5">
+  <thead>
+    <tr>
+      <th>Subject</th>
+      <th>Students Taken</th>
+      <th>Percentage (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for subject in subject_data %}
+    <tr>
+      <td>{{ subject.name }}</td>
+      <td>{{ subject.count }}</td>
+      <td>{{ subject.percent }}%</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,121 @@
+{% extends "base_teacher.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    <label class="fw-bold fs-5 ms-2">List Student in Class</label>
+    {% comment %} <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link {% if not student %}active{% endif %}" href="{% url 'stdRecord' %}">Record</a>
+        </li>
+        {% if student %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'stdRecordView' student.id %}">View Student</a>
+        </li>
+        {% endif %}
+    </ul> {% endcomment %}
+    <div class="">
+        <div class="p-2">
+            {% comment %} <h1>List Record Student</h1> {% endcomment %}
+            <div class="">
+                <form method="get" class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <!-- 👈 Dropdown for Intake Year -->
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle bg-main" type="button" id="intakeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% if selected_intake %}{{ selected_intake }}{% else %}- Select Intake -{% endif %}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="intakeDropdown">
+                    {% for year in intake_years %}
+                        <li>
+                        <a class="dropdown-item" href="?intake={{ year }}{% if query %}&q={{ query }}{% endif %}">{{ year }}</a>
+                        </li>
+                    {% endfor %}
+                    <li>
+                        <a class="dropdown-item" href="?{% if query %}q={{ query }}{% endif %}">Show All</a>
+                    </li>
+                    </ul>
+                </div>
+
+                <!-- 👉 Search bar aligned right -->
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <input type="text" name="q" class="form-control form-control-sm shadow-sm" placeholder="Search student name..." value="{{ query|default_if_none:'' }}">
+                    <button type="submit" class="btn btn-sm btnPink shadow-sm">Search</button>
+                </div>
+                </form>
+
+
+                <div class="table-responsive rounded-2 shadow">
+                    {% if students %}
+                    <table class="table table-sm mb-0" style="font-size: 80%; width: 100%;">
+                        <tr class="bg-main">
+                            <th class="bg-main text-center">Id</th>
+                            <th class="bg-main">Name</th>
+                            <th class="bg-main text-center">Subjects</th>
+                            <th class="bg-main text-center">Teacher classroom</th>
+                            <th class="bg-main">Form</th>
+                        </tr>
+                        {% for student in students %}
+                        <tr>
+                            <td class="text-center">
+                                {{ forloop.counter0|add:page_obj.start_index|add:"0" }}
+                            </td>
+                            <td>
+                                {{ student.full_name }}
+                            </td>
+                            <td class="text-center">
+                                {% with subject_list=student.subjects.all %}
+                                  {% if subject_list|length >= 11 %}
+                                    <span class="badge bg-success">Full Subject</span>
+                                  {% else %}
+                                    <span class="badge bg-warning text-dark">{{ subject_list|length }} Subject{% if subject_list|length != 1 %}s{% endif %}</span>
+                                  {% endif %}
+                                {% endwith %}
+                              </td>
+                            <td class="text-center">
+                                {{ student.registered_by.user.username }} 
+                            </td>
+                            <td>
+                                <a href="{% url 'stdRecordView' student.id %}" class="btn btn-sm btn-outline-primary fw-bold" title="View">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+                    <nav class="mt-3">
+                        <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                            <a class="page-link txt-main" href="?page={{ page_obj.previous_page_number }}{% if selected_intake %}&intake={{ selected_intake }}{% endif %}"><i class="fa fa-angle-left" aria-hidden="true"></i></a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link bg-main">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link txt-main1" href="?page={{ num }}{% if selected_intake %}&intake={{ selected_intake }}{% endif %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                            <a class="page-link txt-main" href="?page={{ page_obj.next_page_number }}{% if selected_intake %}&intake={{ selected_intake }}{% endif %}"><i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                            </li>
+                        {% endif %}
+                        </ul>
+                    </nav>
+                    {% else %}
+                    <div class="text-muted mt-4">No students found for this intake.</div>
+                    {% endif %}
+            </div>
+        </div>  
+    </div>
+</div>
+        
+{% endblock %}
+

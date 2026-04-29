@@ -1,0 +1,39 @@
+{% extends "base_admin.html" %}
+{% block title %}Register Student{% endblock %}
+{% block template %}
+<div class="main p-3">
+    <h2>Register New Student</h2>
+
+    {% if success %}
+    <div class="alert alert-success">✅ Student registered successfully!</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if request.user.is_superuser %}
+        <div class="mb-3">
+        <label for="teacher">Assign Teacher</label>
+        <select name="teacher" class="form-select" required>
+            <option value="">-- Select Teacher --</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}">{{ t.name }} ({{ t.assigned_class }})</option>
+            {% endfor %}
+        </select>
+        </div>
+        {% endif %}
+
+        {% for field in form %}
+        <div class="mb-3">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.errors %}
+                <div class="text-danger">{{ field.errors|join:", " }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-success">Register Student</button>
+    </form>
+</div>
+{% endblock %} 

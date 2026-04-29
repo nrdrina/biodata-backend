@@ -1,0 +1,99 @@
+{% extends "base_teacher.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3 ">
+  <div class="container-md">
+    <h2 class="fw-bold">Student Assesment Information</h2>
+
+    <form method="get" class="row g-3 align-items-end mt-1">
+    
+      <div class="col-md-2">
+        <label for="intake">Intake</label>
+        <select class="form-select shadow-sm btn-outline-primary" name="intake">
+          <option value="">-- Select Intake --</option>
+          {% for year in years %}
+            <option value="{{ year }}" {% if request.GET.intake == year %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    
+      <div class="col-md-2">
+        <label for="student_class">Class</label>
+        <select class="form-select shadow-sm" name="student_class">
+          <option value="">-- Select Class --</option>
+          {% for class in classes %}
+            <option value="{{ class }}" {% if request.GET.student_class == class %}selected{% endif %}>{{ class }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    
+      <div class="col-md-2">
+        <label for="subject">Subject</label>
+        <select class="form-select shadow-sm" name="subject">
+          <option value="">-- Select Subject --</option>
+          {% for subject in subjects %}
+            <option value="{{ subject.id }}" {% if subject.id|stringformat:"s" == request.GET.subject %}selected{% endif %}>
+              {{ subject.name }} ({{ subject.form_level }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    
+      <div class="col-md-2 mt-2">
+        <label for="exam_type">Exam Type</label>
+        <select class="form-select shadow-sm" name="exam_type">
+          <option value="">-- Select Exam --</option>
+          <option value="1st Exam" {% if request.GET.exam_type == "1st Exam" %}selected{% endif %}>1st Exam</option>
+          <option value="1st Midterm" {% if request.GET.exam_type == "1st Midterm" %}selected{% endif %}>1st Midterm</option>
+          <option value="2nd Exam" {% if request.GET.exam_type == "2nd Exam" %}selected{% endif %}>2nd Exam</option>
+          <option value="2nd Midterm" {% if request.GET.exam_type == "2nd Midterm" %}selected{% endif %}>2nd Midterm</option>
+          <option value="Final Exam" {% if request.GET.exam_type == "Final Exam" %}selected{% endif %}>Final Exam</option>
+        </select>
+      </div>
+    
+      <div class="col-md-2 mt-2">
+        <button type="submit" class="btn btnPink shadow-sm w-50">Filter</button>
+      </div>
+    </form>
+
+    {% if students %}
+    <hr>
+    <div class="table-responsive rounded-2 shadow">
+      <table class="table table-sm mb-0" style="font-size: 80%; width: 100%;">
+      <thead>
+        <tr>
+          <th class="bg-main">ID</th>
+          <th class="bg-main">Student Name</th>
+          <th class="bg-main">Score</th>
+          <th class="bg-main">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td>{{ student.number_matric_std }}</td>
+          <td>{{ student.full_name }}</td>
+          <td>{{ mark_map|get_item:student.id|default:"-" }}</td>
+          <td>
+            {% if student.has_mark %}
+              <span class="badge bg-success">Complete</span>
+            {% else %}
+            <a href="{% url 'subEntryMarkAndPersonal' student.id %}?subject={{ subject.id }}&intake={{ intake }}&student_class={{ student.student_class }}&exam={{ exam_id }}" class="btn btn-sm btn-warning">Pending</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <hr>
+    <p class="text-muted mt-3">No students found for the selected combination.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+

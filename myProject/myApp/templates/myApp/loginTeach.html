@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="overlay"></div>
+    <div class="login-container shadow-lg">
+        <h1 class="text-center">Teacher</h1>
+          <img src="{% static 'images/teacherDP.webp' %}" alt="Profile" class="profile-image">
+          <form method="post">
+            {% csrf_token %}
+              <div class="input-group mb-3 shadow">
+                  <span class="input-group-text">
+                      <i class="fas fa-user"></i>
+                  </span>
+                  <input type="text" class="form-control"  name="username" id="id_username" placeholder="Username" required>
+              </div>
+              <div class="input-group mb-4 shadow">
+                  <span class="input-group-text">
+                      <i class="fas fa-lock"></i>
+                  </span>
+                  <input type="password" class="form-control" name="password" id="id_password" placeholder="Password" required>
+              </div>
+              <button type="submit" class="btn btn-login mb-3">LOGIN</button>
+              {% if error %}
+                <div class="alert alert-danger ">{{ error }}</div>
+              {% endif %}
+          </form>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %}

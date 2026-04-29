@@ -1,0 +1,152 @@
+{% extends "base_admin.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main">
+  <div class="row mb-3">
+    
+    <div class="col-md-4">
+      <div class="card rounded-4 p-3 bg-main text-white fw-bold shadow h-100">
+        <div class="d-flex justify-content-between align-items-center h-100">
+          
+          <div class="d-flex flex-column justify-content-center">
+            <label class="d-block">Total Parents</label>
+            <label class="fs-2">{{ total_parents }}</label>
+          </div>
+          
+          <div class="d-flex align-items-center">
+            <div class="bg-white txt-main rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+              <i class="fa fa-users"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card rounded-4 p-3 bg-pink text-white fw-bold shadow h-100">
+        <div class="d-flex justify-content-between align-items-center h-100">
+         
+          <div>
+            <label class="d-block">Total Students</label>
+            <label class="fs-2">{{ total_students }}</label>
+          </div>
+
+          <div class="d-flex gap-2">
+            <div class="bg-white txt-pink rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+              <i class="fa fa-graduation-cap" aria-hidden="true"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card rounded-4 p-3 bg-warning border-warning text-white fw-bold shadow-lg h-100">
+        <div class="d-flex justify-content-between align-items-center h-100">
+          <div>
+            <label class="d-block">Total Teachers</label>
+            <label class="fs-2">{{ total_teachers }}</label>
+          </div>
+          <div>
+            <div class="bg-white text-center text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+              <i class="fa fa-laptop"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow rounded-4 p-3" style="height: 450px;">
+        <h6 class="fw-bold txt-main">Login Activity</h6>
+        <div style="height: 500px;">
+          <canvas id="loginChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card rounded-4 shadow-lg p-3 bg-white" style="height: 460px;">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold txt-main">Pass vs Fail Overview</h6>
+          <form method="get" class="d-flex">
+            <select name="intake" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+              <option value="">Select Intake</option>
+              {% for intake in all_intakes %}
+                <option value="{{ intake }}" {% if intake == intake_filter %}selected{% endif %}>{{ intake }}</option>
+              {% endfor %}
+            </select>
+            <select name="exam_type" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="">Select Exam</option>
+              {% for exam in all_exams %}
+                <option value="{{ exam }}" {% if exam == exam_type %}selected{% endif %}>{{ exam }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+
+        <div class="d-flex justify-content-center align-items-center mt-4" style="height: 350px;">
+          <canvas id="passFailChart" width="100" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const loginData = {{ login_chart_json|safe }};
+
+  new Chart(document.getElementById('loginChart'), {
+    type: 'line',
+    data: {
+      labels: loginData.labels,
+      datasets: [{
+        label: 'Logins',
+        data: loginData.values,
+        fill: false,
+        borderColor: '#12efdb',
+        tension: 0.3
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+        legend: { display: true }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          min: 0,
+          max: 300,          
+          ticks: { stepSize: 10 }
+        }
+      }
+    }
+  });
+
+  const passFailData = {{ pass_fail_data_json|safe }};
+
+  new Chart(document.getElementById("passFailChart"), {
+    type: "doughnut",
+    data: {
+      labels: passFailData.labels,
+      datasets: [{
+        data: passFailData.values,
+        backgroundColor: ['#2fcf6b', '#e1083c']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+</script>
+{% endblock %}

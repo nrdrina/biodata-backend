@@ -1,0 +1,44 @@
+{% extends "base_teacher.html" %}
+{% load form_filters %}
+
+{% block title %}Student Personal Info{% endblock %}
+
+{% block template %}
+<div class="main p-4">
+  <div class="container-md">
+
+    <h2>👤 Student Personal Form</h2>
+    <p class="text-muted mb-4">
+      You're editing personal info for: <strong>{{ student.full_name }} ({{ student.number_matric_std }})</strong>
+    </p>
+
+    {% if submitted %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        ✅ Personal info saved successfully!
+        <a href="{% url 'stdPersonal' %}" class="btn-close" aria-label="Close"></a>
+      </div>
+    {% endif %}
+
+    <form method="post" class="bg-light p-4 rounded shadow-sm border">
+      {% csrf_token %}
+      <div class="row">
+        {% for field in form %}
+          <div class="col-md-6 mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field|add_class:"form-control" }}
+            {% if field.errors %}
+              <div class="text-danger small">{{ field.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="d-flex justify-content-between mt-3">
+        <a href="{% url 'stdPersonal' %}" class="btn btn-secondary">← Back</a>
+        <button type="submit" class="btn btn-success">💾 Save Info</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

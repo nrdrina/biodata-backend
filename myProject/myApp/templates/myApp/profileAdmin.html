@@ -1,0 +1,56 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block template %}
+<div class="main p-4">
+  <h3 class="mb-4">Admin Profile</h3>
+
+  <div class="card shadow rounded-3 border-0 p-4 w-85">
+    <div class="row">
+      <div class="col-md-3 d-flex justify-content-center align-items-center">
+        {% if user.admin_profile.profile_picture %}
+            <img src="{{ user.admin_profile.profile_picture.url }}" alt="Admin Icon" class="img-fluid rounded-circle shadow" style="width: 150px; height: 150px; object-fit: cover;">
+        {% else %}
+            <img src="{% static 'images/default-avatar.png' %}" alt="Default Avatar" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+        {% endif %}
+      </div>
+
+      <div class="col-md-9">
+        <table class="table borderless">
+            <tr>
+                <th class="txt-main2">Username:</th>
+                <td class="txt-secondary">{{ user.username }}</td>
+            </tr>
+            <tr>
+                <th class="txt-main2">Email:</th>
+                <td class="txt-secondary">{{ user.email }}</td>
+            </tr>
+            <tr>
+                <th class="txt-main2">Superuser:</th>
+                <td>
+                {% if user.is_superuser %}
+                    <span class="badge bg-pink">Yes</span>
+                {% else %}
+                    <span class="badge bg-secondary">No</span>
+                {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th class="txt-main2">Last Login:</th>
+                <td class="txt-secondary">{{ user.last_login|date:"d M Y H:i" }}</td>
+            </tr>
+            <tr>
+                <th class="txt-main2">Joined:</th>
+                <td class="txt-secondary">
+                    {{ user.date_joined|date:"d M Y" }}
+                    <a href="{% url 'editProfileAdmin' %}" class="ms-2 text-decoration-none" title="Edit Profile">
+                    <i class="fa fa-pencil txt-org" aria-hidden="true"></i> <!-- Bootstrap icon -->
+                    </a>
+                </td>
+            </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

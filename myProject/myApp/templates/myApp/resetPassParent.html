@@ -1,0 +1,64 @@
+{% extends "base_admin.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    <h1>Reset Parent Password</h1>
+    <ul class="nav nav-tabs mt-3">
+        <li class="nav-item">
+            <a class="nav-link txt-main1 bg-purp-faded2" href="{% url 'manageParent' %}">Record</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link txt-main1 bg-purp-faded" href="{% url 'newParents' %}">New Account Parent</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active bg-main shadow-sm fw-bold" aria-current="page" href="{% url 'resetPassParent' %}">Reset Password</a>
+        </li>
+    </ul>  
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-success mt-2">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="p-3  bg-white mt-3 rounded-3 shadow">
+                <!-- Select Parent -->
+                <div class="mb-3 txt-org fw-bold">
+                    <label for="parent-search" class="form-label">Search Parent by Username</label>
+                    <input class="form-control" list="parentOptions" name="parent_search" id="parent-search" placeholder="Type parent username..." required>
+                    <datalist id="parentOptions">
+                    {% for user in unique_parents %}
+                        <option value="{{ user.username }}">{{ user.email }}</option>
+                    {% endfor %}
+                    </datalist>
+                </div>
+
+                <!-- Password Inputs -->
+                <div class="row">
+                    <div class="col-md-6 mb-3 txt-org fw-bold">
+                    <label>New Password</label>
+                    <input type="password" name="new_password" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3 txt-org fw-bold">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirm_password" class="form-control" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btnMain">Update Password</button>
+            </div>
+        </form>
+
+</div>
+
+{% endblock %}
+

@@ -1,0 +1,157 @@
+{% extends "base_admin.html" %}
+{% load static %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    <h1>Register New Account Parent</h1>
+
+    <ul class="nav nav-tabs mt-3">
+        <li class="nav-item">
+            <a class="nav-link txt-main1 bg-purp-faded" href="{% url 'manageParent' %}">Record</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active bg-main shadow-sm fw-bold" href="{% url 'newParents' %}">New Account Parent</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link txt-main1 bg-purp-faded2" href="{% url 'resetPassParent' %}">Reset Password</a>
+        </li>
+    </ul>
+    {% if error_msgs %}
+    <div class="alert alert-danger mt-2">
+        <ul class="mb-0">
+        {% for err in error_msgs %}
+            <li>{{ err }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    <div class="pt-1">
+        <form method="post">
+            {% csrf_token %}
+                <div class="bg-white shadow rounded-3 p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-4 mb-3 fw-bold txt-org">
+                        {{ form.username.label_tag }}
+                        {{ form.username|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-4 mb-3 fw-bold txt-org">
+                        {{ form.password.label_tag }}
+                        {{ form.password|add_class:"form-control" }}
+                        </div>
+                        <div class="col-md-4 mb-3 fw-bold txt-org">
+                        {{ form.email.label_tag }}
+                        {{ form.email|add_class:"form-control" }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="student-search" class="fw-bold txt-org">Search Child</label><br>
+                            <div class="d-flex">
+                                <input class="form-control me-2" style="max-width: 250px;" list="studentOptions" id="student-search" placeholder="Type name or matric ID">
+                                <button type="button" id="add-student-btn" class="btn btn-warning fw-bold">Add</button>
+                            </div>
+
+                            <datalist id="studentOptions">
+                                {% for s in students %}
+                                <option value="{{ s.full_name }} ({{ s.number_matric_std }})" data-id="{{ s.id }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                    <!-- List of added children -->
+                    
+                        <div class="col-md-12 ">
+                        <hr>
+                        <label class="fw-bold txt-main">Children to Assign:</label>
+                        <ul id="student-list" class="list-group"></ul>
+
+                        <input type="hidden" name="selected_students" id="selected-students">
+                        <button type="submit" class="btn btnMain shadow-sm mt-4">Create Parent Account</button>  
+                        </div> 
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal" tabindex="-1" id="successModal">
+                <div class="modal-dialog">
+                <div class="modal-content border-success">
+                    <div class="modal-header">
+                    <h5 class="modal-title text-success">🎉 Registration Successful</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    <p>The parent account has been successfully registered and saved to the system!</p>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btnMain" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+  const studentsData = {{ students_data_json|safe }};  // this comes from the view
+  const studentList = document.getElementById("student-list");
+  const hiddenField = document.getElementById("selected-students");
+  const addedIds = new Set();
+
+  document.getElementById("add-student-btn").addEventListener("click", () => {
+    const input = document.getElementById("student-search");
+    const value = input.value.trim();
+
+    const selectedStudentIds = [];
+    function addStudent(studentId) {
+        if (!selectedStudentIds.includes(studentId)) {
+            selectedStudentIds.push(studentId);
+            document.getElementById('selected-student-ids').value = selectedStudentIds.join(',');
+        }
+    }
+
+    const matched = studentsData.find(s => value === `${s.name} (${s.matric})`);
+    if (!matched || addedIds.has(matched.id)) return;
+
+    addedIds.add(matched.id);
+
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.textContent = `${matched.name} (${matched.matric})`;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "btn btn-sm btn-danger";
+    removeBtn.textContent = "Remove";
+    removeBtn.onclick = () => {
+      addedIds.delete(matched.id);
+      studentList.removeChild(li);
+      updateHidden();
+    };
+
+    li.appendChild(removeBtn);
+    studentList.appendChild(li);
+    updateHidden();
+    input.value = "";
+  });
+
+  function updateHidden() {
+    hiddenField.value = Array.from(addedIds).join(",");
+  }
+</script>
+
+{% if success %}
+    <script>
+      window.addEventListener("load", () => {
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+      });
+    </script>
+{% endif %} 
+
+
+{% endblock %}
+

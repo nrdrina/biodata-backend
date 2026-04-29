@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Biodata Form</title>
+    <div id="data"></div>
+</head>
+<body>
+    <h2>Fill Your Biodata</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Name"><br><br>
+        <input type="number" name="age" placeholder="Age"><br><br>
+        <input type="email" name="email" placeholder="Email"><br><br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
+
+<script>
+fetch("/view/")
+  .then(res => res.json())
+  .then(data => {
+    let output = "";
+    data.forEach(item => {
+      output += `<p>${item.name} (${item.age}) - ${item.email}</p>`;
+    });
+    document.getElementById("data").innerHTML = output;
+  });
+</script>

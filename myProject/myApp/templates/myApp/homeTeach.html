@@ -1,0 +1,182 @@
+{% extends "base_teacher.html" %}
+{% load custom_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+  <div class="container-fluids">
+    <div class="row mb-4">
+      <div class="col-md-8 mb-3 mb-md-0">
+        <div class="card shadow rounded-4 p-3" style="height: 255px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="mb-0 txt-main fw-bold">Attendance Chart ({{ current_year }})</label>
+            <form method="get">
+              <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for y in years %}
+                    <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            </form>
+          </div>
+          <canvas id="attendanceChart" style="height: 100%; width: 100%;"></canvas>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="row h-100">
+          <div class="col-12 mb-3">
+            <div class="card rounded-4 p-3 bg-main text-white shadow h-100">
+              <div class="d-flex justify-content-between align-items-center h-100">
+                <div>
+                  <label class="d-block mb-1 fw-bold">Total Students in Class</label>
+                  <label class="fs-2 fw-bold">{{ total_students }}</label>
+                </div>
+                <div class="bg-white txt-main rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                  <i class="fa fa-users fs-3"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card rounded-4 p-3 bg-pink text-white shadow h-100">
+              <div class="d-flex justify-content-between align-items-center h-100">
+                <div>
+                  <label class="d-block mb-1 fw-bold">Students Taking Your Subject</label>
+                  <label class="fs-2 fw-bold">{{ subject_students }}</label>
+                </div>
+                <div class="bg-white txt-pink rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                  <i class="fa fa-book fs-3"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card shadow rounded-4 p-3 h-100">
+          <label class="text-center mb-2 txt-main fw-bold">List Student Risk</label>
+          <ul class="nav nav-tabs " id="riskTab" role="tablist" style="font-size: 12px;">
+            {% for tab in risk_exam_tabs %}
+              <li class="nav-item txt-main" role="presentation"
+                  style="background-color: {{ tab.color }}; border-radius: 10px 10px 0 0;">
+                <button class="nav-link {% if forloop.first %}active{% endif %}" id="tab-{{ forloop.counter }}"
+                        data-bs-toggle="tab" data-bs-target="#panel-{{ forloop.counter }}"
+                        type="button" role="tab">
+                  {{ tab.name }}
+                </button>
+              </li>
+            {% endfor %}
+          </ul>
+          <div class="tab-content border border-top-0 rounded-bottom-4 bg-light" style="max-height: 200px; max-width: 465px; overflow-y: auto;">
+            {% for tab in risk_exam_tabs %}
+            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="panel-{{ forloop.counter }}" role="tabpanel">
+              {% if tab.students %}
+                <table class="table table-sm table-bordered align-middle mb-0" style="font-size: 12px;">
+                  <thead>
+                    <tr>
+                      <th class="w-50">Name</th>
+                      <th class="w-25">Gender</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for s in tab.students %}
+                      <tr>
+                        <td class="py-1 px-2 small">{{ s.full_name }}</td>
+                        <td class="py-1 px-2 small">{{ s.gender }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <div class="p-2 text-center text-muted">No at-risk students for this exam.</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="card shadow rounded-4 p-3 h-100">
+          <label class="text-center txt-main fw-bold">Login History by Month</label>
+          <canvas id="loginChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  const attendanceLabels = {{ attendance_labels|safe }};
+  const attendancePresent = {{ attendance_present|safe }};
+  const attendanceAbsent = {{ attendance_absent|safe }};
+  const attendanceReason = {{ attendance_reason|safe }};
+
+  const loginLabels = {{ login_labels|safe }};
+  const loginValues = {{ login_values|safe }};
+
+  new Chart(document.getElementById('attendanceChart'), {
+    type: 'line',
+    data: {
+      labels: attendanceLabels,
+      datasets: [
+        {
+          label: 'Present',
+          data: attendancePresent,
+          borderColor: '#44ce6b',
+          backgroundColor: 'rgba(68, 206, 107, .2)',
+          fill: true
+        },
+        {
+          label: 'Absent',
+          data: attendanceAbsent,
+          borderColor: '#e83e3e',
+          backgroundColor: 'rgba(232, 62, 62, .2)',
+          fill: true
+        },
+        {
+          label: 'Reason',
+          data: attendanceReason,
+          borderColor: '#fbc531',
+          backgroundColor: 'rgba(251, 197, 49, .2)',
+          fill: true
+        }
+      ]
+    },
+    options: {
+      scales: { y: { beginAtZero: true, suggestedMax: 40 } }
+    }
+  });
+
+  // Risk by Gender Chart
+  
+  // Login Chart
+  new Chart(document.getElementById('loginChart'), {
+    type: 'line',
+    data: {
+      labels: {{ login_labels|safe }},
+      datasets: [{
+        label: 'Logins',
+        data: {{ login_values|safe }},
+        borderColor: '#20c997',
+        fill: false,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+</script> 
+{% endblock %}

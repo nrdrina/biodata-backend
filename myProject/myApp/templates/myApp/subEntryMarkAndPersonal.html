@@ -1,0 +1,284 @@
+{% extends "base_teacher.html" %}
+{% load form_filters %}
+
+{% block template %}
+<div class="main p-4">
+  <div class="container-md">
+
+    <div class="card shadow rounded-4 p-4 bg-white">
+        <h4 class="mb-3 fw-bold txt-main">📝 Keyin Assessment</h4>
+
+        <p class="text-muted mb-1 txt-main2 fw-bold">Student: 
+          <strong class="txt-org">{{ student.full_name }} ({{ student.number_matric_std }})</strong>
+        </p>
+        <p class="text-muted txt-main2 fw-bold">Subject: <strong class="txt-org">{{ subject.name }}</strong> - <span class="txt-secondary">{{ exam.name }} ({{ exam.year }})</span></p>
+        <p></p>
+
+        {% if submitted %}
+          <div class="alert alert-success shadow-sm mt-3">
+            {% if personal_form %}
+              ✅ Mark and Personal Info Saved!
+            {% else %}
+              ✅ Mark Saved!
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <form method="post" class="">
+          {% csrf_token %}
+
+          <!-- Subject Score -->
+          <div class="mb-4">
+            <label for="score" class="fw-semibold">🎯 Subject Mark</label>
+            <input type="number" name="score" id="score" class="form-control mt-2 shadow-sm w-auto"
+                  value="{{ existing_score|default:'' }}" step="0.01" required>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Socio-Academic Form -->
+          {% if personal_form %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold txt-main">👥 Socio-Academic Student Information</h5>
+            <button type="button" class="btn btn-sm btnPink" data-bs-toggle="modal" data-bs-target="#infoModal">
+              <i class="fa-solid fa-circle-question me-1  shadow-sm"></i> Help
+            </button>
+          </div>
+
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label class="form-label">📍 Type of Address Area</label>
+              {{ personal_form.address|add_class:"form-select shadow-sm" }}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">💰 Family Size / Income</label>
+              {{ personal_form.famsize|add_class:"form-select shadow-sm" }}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">👨‍👩‍👧 Parent Status</label>
+              {{ personal_form.pstatus|add_class:"form-select shadow-sm" }}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">👤 Guardian</label>
+              {{ personal_form.guardian|add_class:"form-select shadow-sm" }}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Mother's Education</label>
+              {{ personal_form.medu|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = Primary, 7 = PhD</div> {% endcomment %}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Father's Education</label>
+              {{ personal_form.fedu|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = Primary, 7 = PhD</div> {% endcomment %}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Mother's Job</label>
+              {{ personal_form.mjob|add_class:"form-select shadow-sm" }}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Father's Job</label>
+              {{ personal_form.fjob|add_class:"form-select shadow-sm" }}
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Family Support</label>
+              {{ personal_form.famsup|add_class:"form-select shadow-sm" }}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Travel Time</label>
+              {{ personal_form.traveltime|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = &lt;10min, 4 = 30min+</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Weekly Study Time</label>
+              {{ personal_form.studytime|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = 1hr, 4 = 5+ hrs</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Merit</label>
+              {{ personal_form.merit|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">0 = None, 3 = 5+</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Activities Participated</label>
+              {{ personal_form.activities|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">0 = None, 4 = 5+</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Rate of Spent On The Internet </label>
+              {{ personal_form.internet|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">0 = None, 4 = 5+ hrs</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Rate Family Relationship</label>
+              {{ personal_form.famrel|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = Poor, 5 = Excellent</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Rate Free Time For Revision</label>
+              {{ personal_form.freetime|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = Very little, 5 = A lot</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Rate Hang Out With Frined</label>
+              {{ personal_form.goout|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = Rarely, 5 = Often</div> {% endcomment %}
+            </div>
+
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Health</label>
+              {{ personal_form.health|add_class:"form-control shadow-sm" }}
+              {% comment %} <div class="form-text">1 = Poor, 5 = Excellent</div> {% endcomment %}
+            </div>
+            <!-- Add more form fields here as needed -->
+          </div>
+
+          {% else %}
+            <div class="alert alert-warning shadow-sm">
+              ⚠ This student is not under your class. You cannot key in socio-academic info.
+            </div>
+          {% endif %}
+
+          <!-- Action Buttons -->
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <a href="{% url 'subMark' %}?subject={{ subject.id }}&intake={{ intake }}&student_class={{ student.student_class }}&exam_type={{ exam.name }}" class="btn btn-secondary">
+              Back
+            </a>
+            <button type="submit" class="btn btn-success shadow-sm"
+                    onclick="return confirm('Are you sure you want to save? You cannot edit the mark after saving.')">
+              Save All
+            </button>
+          </div>
+        </form>
+      </div>
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="infoModalLabel">Field Explanation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <!-- Card 1 -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background: #ffe4e4;">
+                  <h6 class="text-center mb-3 fw-bold">Study Time</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 1 = 1 hour</li>
+                    <li>• 2 = 2 to 3 hours</li>
+                    <li>• 3 = 4 to 5 hours</li>
+                    <li>• 4 = 5 and above hours</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Card 2 -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background:rgb(255, 240, 228);">
+                  <h6 class="text-center mb-3 fw-bold">Internet</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 0 = None</li>
+                    <li>• 1 = 1 hour</li>
+                    <li>• 2 = 2 to 3 hours</li>
+                    <li>• 3 = 4 to 5 hours</li>
+                    <li>• 4 = 5+ hours</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Card 3: Rate Free Time -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background:rgb(255, 249, 228);">
+                  <h6 class="text-center mb-3 fw-bold">Rate Free Time<br>to Do Revision</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 1 = Don't have time</li>
+                    <li>• 2 = A little</li>
+                    <li>• 3 = Sometimes free</li>
+                    <li>• 4 = Often free</li>
+                    <li>• 5 = Totally free</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Card 4: Family Relationship -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background:rgb(248, 255, 228);">
+                  <h6 class="text-center mb-3 fw-bold">Family Relationship</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 1 = Very poor</li>
+                    <li>• 2 = Poor</li>
+                    <li>• 3 = Average</li>
+                    <li>• 4 = Good</li>
+                    <li>• 5 = Excellent</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Card 5: Travel Time -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background:rgb(237, 255, 228);">
+                  <h6 class="text-center mb-3 fw-bold">Travel Time</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 1 = Less than 10 min</li>
+                    <li>• 2 = 10 to 15 min</li>
+                    <li>• 3 = 20 to 25 min</li>
+                    <li>• 4 = 30 min and above</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Card 6: Merit -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background:rgb(228, 255, 229);">
+                  <h6 class="text-center mb-3 fw-bold">Merit</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 0 = None</li>
+                    <li>• 1 = 1 to 3 times</li>
+                    <li>• 2 = 3 to 5 times</li>
+                    <li>• 3 = 5 or above</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Card 7: Activities -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background:rgb(228, 255, 241);">
+                  <h6 class="text-center mb-3 fw-bold">Activities Participate</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 0 = None</li>
+                    <li>• 1 = 1 to 2 activities</li>
+                    <li>• 2 = 2 to 3 activities</li>
+                    <li>• 3 = 4 to 5 activities</li>
+                    <li>• 4 = 5 or above</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Card 8: Parent Education Level -->
+              <div class="col-md-3 d-flex">
+                <div class="card shadow-sm p-3 h-100 w-100" style="background:rgb(228, 255, 253);">
+                  <h6 class="text-center mb-3 fw-bold">Mother / Father<br>Education Level</h6>
+                  <ul class="list-unstyled mb-0">
+                    <li>• 1 = Primary</li>
+                    <li>• 2 = Secondary</li>
+                    <li>• 3 = Diploma / Skills Cert</li>
+                    <li>• 4 = Degree</li>
+                    <li>• 5 = Master</li>
+                    <li>• 6 = PhD</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Add more cards here as needed -->
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

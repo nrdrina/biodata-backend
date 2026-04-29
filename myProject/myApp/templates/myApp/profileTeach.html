@@ -1,0 +1,71 @@
+{% extends 'base_teacher.html' %}
+{% load static %}
+
+{% block template %}
+<div class="main p-3">
+  <div class="card shadow mx-auto" style="max-width: 500px;">
+    <div class="card-body text-center">
+
+      <!-- Profile Image -->
+      {% if teacher.profile_picture %}
+        <img src="{{ teacher.profile_picture.url }}" alt="Profile Image" class="rounded-circle mb-3" style="width: 130px; height: 130px; object-fit: cover;">
+      {% else %}
+        <img src="{% static 'images/default-avatar.png' %}" alt="Default Avatar" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+      {% endif %}
+
+      <h4 class="mb-1 txt-black">{{ teacher.name }}</h4>
+      <p class="text-muted txt-main2 fw-bold">{{ teacher.username }}</p>
+
+      <hr>
+
+      <div class="row text-start mt-4">
+        <div class="col-md-6 mb-3 fw-bold">
+          <strong class="txt-org">Class Assigned:</strong><br>
+          {{ teacher.assigned_class.name }}
+        </div>
+
+        <div class="col-md-6 mb-3 fw-bold">
+          <strong class="txt-org">Form Level:</strong><br>
+          {{ teacher.assigned_class.form_level }}
+        </div>
+
+        <div class="col-md-6 mb-3 fw-bold">
+          <strong class="txt-org">Email:</strong><br>
+          {{ teacher.email }}
+        </div>
+
+        <div class="col-md-6 mb-3 fw-bold">
+          <strong class="txt-org">Phone:</strong><br>
+          {{ teacher.phone_number }}
+        </div>
+
+        <div class="col-md-6 mb-3 fw-bold">
+          <strong class="txt-org">IC Number:</strong><br>
+          {{ teacher.ic_number }}
+        </div>
+
+        <div class="col-md-6 mb-3 fw-bold">
+          <strong class="txt-org">Gender:</strong><br>
+          {{ teacher.gender }}
+        </div>
+
+        <div class="col-md-6 mb-3 fw-bold">
+          <strong class="txt-org">Age:</strong><br>
+          {{ teacher.age }}
+        </div>
+
+        <hr>
+
+        <div class="col-md-12">
+            <strong>Subjects Teaching:</strong><br>
+            {% for sub in teacher.subjects.all %}
+              <span class="badge bg-pink me-1">{{ sub.name }} {{ sub.form_level }}</span>
+            {% empty %}
+              <span class="text-muted">No subjects assigned</span>
+            {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

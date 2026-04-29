@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; }
+    h2 { color: #2c3e50; }
+    {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th {
+      background-color: #eee;
+    }
+  </style>
+</head>
+
+<body>
+    
+  <h2>📊 Grade Performance Report</h2>
+  <p><strong>Date:</strong> {{ date }}</p>
+  <p><strong>Intake:</strong> {{ intake }} | <strong>Form:</strong> {{ form_level }} | <strong>Class:</strong> {{ class_name }} | <strong>Exam:</strong> {{ exam_type }}</p>
+
+    {% for subject in data %}
+      {% if subject.chart %}
+        <div style="page-break-inside: avoid; text-align: center;">
+          <h4 style="margin-top: 10px;">Grade Chart for {{ subject.subject }}</h4>
+          <img src="data:image/png;base64,{{ subject.chart }}" style="width:70%; max-height:250px; margin-bottom:20px;" />
+          <p class="small">Total Students: {{ subject.total }}</p>
+        </div>
+      {% endif %}
+    {% endfor %}
+</body>
+</html>

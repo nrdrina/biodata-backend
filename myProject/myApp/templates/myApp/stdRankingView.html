@@ -1,0 +1,360 @@
+{% extends "base_teacher.html" %}
+{% block title %}View Result{% endblock %}
+{% block template %}
+
+<div class="main p-3">
+  <div class="container">
+    <h2>📊 Result for {{ student.full_name }} ({{ student.number_matric_std }})</h2>
+
+    <form method="get" class="mb-1 d-flex justify-content-between align-items-center">
+      <div>
+        <label class="txt-main fw-bold mt-2 txt-main">Select Exam Type:</label>
+        <div class="dropdown mb-3 d-inline-block">
+          <button class="btn dropdown-toggle btnMain shadow-sm fw-bold" type="button" id="examDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if exam_type %}{{ exam_type }}{% else %}– Select Exam Type –{% endif %}
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="examDropdown">
+            <li><a class="dropdown-item" href="?exam_type=1st Exam ">1st Exam</a></li>
+            <li><a class="dropdown-item" href="?exam_type=1st Midterm">1st Midterm</a></li>
+            <li><a class="dropdown-item" href="?exam_type=2nd Exam">2nd Exam</a></li>
+            <li><a class="dropdown-item" href="?exam_type=2nd Midterm">2nd Midterm</a></li>
+            <li><a class="dropdown-item" href="?exam_type=Final Exam">Final Exam</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Icon button to trigger modal -->
+      <button type="button" class="btn btnPink ms-auto " data-bs-toggle="modal" data-bs-target="#personalModal">
+          <i class="fa fa-universal-access" aria-hidden="true" title="Student Socio-background"></i>
+      </button>
+      {% if subject_count >= 8 %}
+        <button type="button" class="btn btn-warning ms-1" data-bs-toggle="modal" data-bs-target="#predictModal">
+          <i class="fa fa-area-chart" aria-hidden="true" title="predict student"></i>
+        </button>
+      {% endif %}
+    </form>
+
+    <div class="table-responsive rounded-3 shadow">
+      {% if marks %}
+        <table class="table table-bordered table-sm mb-0" style="font-size: 80%; width: 100%;">
+          <thead>
+            <tr>
+              <th class="bg-main text-center">No</th>
+              <th class="bg-main">Subject</th>
+              <th class="bg-main">Marks (%)</th>
+              <th class="bg-main">Grade</th>
+              <th class="bg-main">Status</th>  <!-- ✅ New column -->
+            </tr>
+          </thead>
+          <tbody>
+            {% for mark in marks %}
+              <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ mark.subject.name }}</td>
+                <td>{{ mark.marks }}%</td>
+                <td>{{ mark.gred }}</td>     <!-- ✅ Just grade -->
+                <td>{{ mark.desc }}</td>     <!-- ✅ Just status (e.g. Cemerlang, Baik) -->
+              </tr>
+            {% endfor %}
+
+            <tr class="table-info fw-bold">
+              <td colspan="2" class="">Total % (Core Subjects)</td>
+              <td>{{ percent }}%</td>
+              <td colspan="3"></td>
+            </tr>
+          </tbody>
+        </table>
+    </div>
+    {% else %}
+      <p class="text-muted">No marks found for selected exam.</p>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <a href="{% url 'stdRanking' %}" class="btn btn-outline-main">Back</a>
+
+        {% if failed_critical_subjects or grade_summary %}
+        <table class="table  table-bordered w-auto mb-0 shadow">
+          <thead class="table-light ">
+            <tr>
+              <th class="bg-warning text-black text-center">Status</th>
+              <th class="bg-warning text-black text-center">Total Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-center">
+                {% if subject_failures %}
+                  ❌ Failed ({{ subject_failures|length }})
+                {% else %}
+                  ✅ Passed
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% for grade, count in grade_summary.items %}
+                  {{ count }}{{ grade }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        {% endif %}
+    </div>
+    {% comment %} <p class="text-muted">Debug subject_count: {{ subject_count }}</p> {% endcomment %}
+  
+    
+  <!-- Modal -->
+  <div class="modal fade" id="predictModal" tabindex="-1" aria-labelledby="predictModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+      <div class="modal-content border-info">
+        <div class="modal-header">
+          <h5 class="modal-title" id="predictModalLabel">Prediction Result</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          {% if prediction_result|stringformat:"s" == "Risk" %}
+            <p class="fs-4 fw-bold text-danger">⚠️ This student is at <u>Risk</u>.</p>
+          {% elif prediction_result == "Not Risk" %}
+            <p class="fs-4 fw-bold text-success">✅ This student is <u>Not at Risk</u>.</p>
+          {% else %}
+            <p class="text-muted">Prediction unavailable: {{ prediction_result }}</p>
+          {% endif %}
+
+           {% for t in trends %}
+            {% if t.exam == exam_type %}
+              <div class="mt-2">
+                <p class="fw-bold mb-1">
+                  {{ t.exam }}: 
+                  <span class="{% if t.risk == 'Risk' %}text-danger{% else %}text-success{% endif %}">
+                    {{ t.risk }}
+                  </span>
+                  <span class="ms-0 small text-muted">(Average exam mark : {{ t.score }}%)</span>
+                </p>
+                <p class="text-secondary small mb-0">{{ t.trend }}</p>
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          {% if risk_score is not None %}
+            <div class="mt-1">
+              <p style="margin-top:10px; color:#5e35b1; font-weight:bold;">Predicted Risk Score: {{ risk_score|floatformat:2 }}%</p>
+              {% if "Final" not in exam_type %}
+                {% if percent < 50 %}
+                  <p class="text-warning small">⚠️ This student has a high chance of failure if no intervention is done.</p>
+                {% elif percent >= 50 and percent < 60 %}
+                  <p class="text-info small">⚠️ Moderate risk — recommend attention.</p>
+                {% elif percent >= 60 %}
+                  <p class="text-success small">✅ Low risk — performance is satisfactory.</p>
+                {% endif %}
+              {% else %}
+                <p class="text-primary fw-bold small">Final Exam evaluated. No further intervention message required.</p>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <!-- NEW: Trend Summary & Timeline -->
+          <div class="text-start mt-4">
+            <div class="alert alert-primary py-2 px-3 shadow-sm">
+              <b><i class="fa fa-line-chart"></i> Performance Trend:</b><br>
+              {{ trend_summary }}
+            </div>
+            {% comment %} <ul class="timeline list-unstyled ms-1">
+              {% for t in trends %}
+                <li class="mb-2">
+                  <b>{{ t.exam }}:</b>
+                  <span class="{% if t.risk == 'Risk' %}text-danger{% else %}text-success{% endif %}">
+                    {{ t.risk }}
+                  </span>
+                  <span class="ms-2 small text-muted">({{ t.score }}%)</span>
+                  <br>
+                  <span class="small">{{ t.trend }}</span>
+                </li>
+              {% endfor %}
+            </ul> {% endcomment %}
+          </div>
+
+          <!-- Bar Chart (Your code unchanged) -->
+          <div class="mt-1" style="width: 100%; max-width: 600px; height: 250px; margin: 0 auto;">
+            <canvas id="riskChart"></canvas>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const ctx = document.getElementById('riskChart').getContext('2d');
+              if (window.riskChartInstance) {
+                window.riskChartInstance.destroy();
+              }
+              window.riskChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: ['Family Relationship', 'Health', 'Free Time', 'Study Time','Absences'],
+                  datasets: [
+                    {% for exam_label, values in multi_exam_graph.items %}
+                      {
+                        label: "{{ exam_label }}",
+                        data: [
+                          {{ values.famrel }},
+                          {{ values.health }},
+                          {{ values.freetime }},
+                          {{ values.studytime }},
+                          {{ values.absence }}
+                        ],
+                        backgroundColor: "{{ values.color }}"
+                      }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                  ]
+                  }
+                });
+              });
+            </script>
+        </div>
+        <div class="modal-footer">         
+          <a href="{% url 'download_predict_pdf' student.id exam_type %}" class="btn btnMain" target="_blank">
+            <i class="fa fa-file-pdf-o"></i> Download as PDF
+          </a>
+          <button type="button" class="btn btn-outline-main" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  {% comment %} FETCH DATA STDPER {% endcomment %}
+  <div class="modal fade" id="personalModal" tabindex="-1" aria-labelledby="personalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="personalModalLabel">
+            Contributing Factors to Academic Performance
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          {% if personal %}
+            <div class="row g-3">
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background: #ffe4e4;">  
+                  <small class="text-muted">Type Of Areas</small>
+                  <h6 class="txt-main fw-bold">{{ personal.get_address_display }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(255, 239, 228);">  
+                  <small class="text-muted">Family Size</small>
+                  <h6 class="txt-main fw-bold">{{ personal.get_famsize_display }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(255, 248, 228);">  
+                  <small class="text-muted">Mother Education Level</small>
+                  <h6 class="txt-main fw-bold">{{ personal.medu }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(254, 255, 228);">  
+                  <small class="text-muted">Father Education Level</small>
+                  <h6 class="txt-main fw-bold">{{ personal.fedu }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(244, 255, 228);">  
+                  <small class="text-muted">Parent Status</small>
+                  <h6 class="txt-main fw-bold">{{ personal.get_pstatus_display }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(239, 255, 228);">  
+                  <small class="text-muted">Mother Job</small>
+                  <h6 class="txt-main fw-bold">{{ personal.get_mjob_display }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 255, 229);">  
+                  <small class="text-muted">Father Job</small>
+                  <h6 class="txt-main fw-bold">{{ personal.get_fjob_display }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 255, 236);">  
+                  <small class="text-muted">Guardian</small>
+                  <h6 class="txt-main fw-bold">{{ personal.get_guardian_display }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 255, 242);">  
+                  <small class="text-muted">Family Support</small>
+                  <h6 class="txt-main fw-bold">{{ personal.get_famsup_display }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 255, 253);">  
+                  <small class="text-muted">Travel Time</small>
+                  <h6 class="txt-main fw-bold">{{ personal.traveltime }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 249, 255);">  
+                  <small class="text-muted">Study Time</small>
+                  <h6 class="txt-main fw-bold">{{ personal.studytime }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 241, 255);">  
+                  <small class="text-muted">Merit</small>
+                  <h6 class="txt-main fw-bold">{{ personal.merit }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 237, 255);">  
+                  <small class="text-muted">Total Activities Participate</small>
+                  <h6 class="txt-main fw-bold">{{ personal.activities }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(228, 230, 255);">  
+                  <small class="text-muted">Rate Spend Time With Internet</small>
+                  <h6 class="txt-main fw-bold">{{ personal.internet }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(234, 228, 255);">  
+                  <small class="text-muted">Rate Spend Time With Friend</small>
+                  <h6 class="txt-main fw-bold">{{ personal.goout }}</h6>
+                </div>
+              </div>
+              
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(241, 228, 255);">  
+                  <small class="text-muted">Rate Free Time To Have Revision</small>
+                  <h6 class="txt-main fw-bold">{{ personal.freetime }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(250, 228, 255);">  
+                  <small class="text-muted">Rate Family Relationship</small>
+                  <h6 class="txt-main fw-bold">{{ personal.famrel }}</h6>
+                </div>
+              </div>
+              <div class="col-md-3 d-flex">
+                <div class="card text-center p-2 shadow-sm h-100 w-100" style="background:rgb(255, 228, 250);">  
+                  <small class="text-muted">Rate Health</small>
+                  <h6 class="txt-main fw-bold">{{ personal.health }}</h6>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <p class="text-muted">No personal info available for this exam.</p>
+          {% endif %}
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+</div>
+
+{% endblock %}

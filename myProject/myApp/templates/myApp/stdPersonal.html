@@ -1,0 +1,56 @@
+{% extends "base_teacher.html" %}
+{% load static %}
+
+{% block title %}Student Personal Info{% endblock %}
+
+{% block template %}
+<div class="main p-4">
+  <div class="container-md">
+    <h2>🧠 Student Personal Info Overview</h2>
+
+    <form method="get" class="mb-4 d-flex align-items-end gap-3">
+      <div>
+        <label for="intake">Select Intake:</label>
+        <select name="intake" id="intake" class="form-select">
+          <option value="">-- Select Intake --</option>
+          {% for year in years %}
+            <option value="{{ year }}" {% if year == selected_intake %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Go</button>
+    </form>
+
+    {% if students %}
+    <table class="table table-bordered table-striped mt-3">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Name</th>
+          <th>Matric</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ student.full_name }}</td>
+          <td>{{ student.number_matric_std }}</td>
+          <td>
+            {% if student.studentpersonal %}
+              <a href="{% url 'fill_student_personal' student.id %}" class="btn btn-sm btn-info">Edit</a>
+            {% else %}
+              <a href="{% url 'fill_student_personal' student.id %}" class="badge bg-warning text-dark">Pending</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% elif selected_intake %}
+    <p class="text-muted">No students found for selected intake.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

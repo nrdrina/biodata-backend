@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 14px; }
+    h2 { color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #333; padding: 6px; text-align: center; }
+    th { background-color: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h2>Exam Result Summary</h2>
+  <p><strong>Name:</strong> {{ student.full_name }}</p>
+  <p><strong>Matric No:</strong> {{ student.number_matric_std }}</p>
+  <p><strong>Exam:</strong> {{ exam_type }}</p>
+  <p><strong>Percentage:</strong> {{ percent }}%</p>
+
+  <table>
+    <tr>
+      <th>Subject</th>
+      <th>Score</th>
+    </tr>
+    {% for mark in marks %}
+      <tr>
+        <td>{{ mark.subject.name }}</td>
+        <td>{{ mark.marks }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

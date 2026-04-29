@@ -1,0 +1,269 @@
+{% extends "base_admin.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block template %}
+<div class="main p-3">
+    <h5 class="fw-bold txt-main">Teacher Registration</h5>
+    <ul class="nav nav-tabs mb-1 pt-2">
+        <li class="nav-item">
+            <a class="nav-link txt-main1 bg-purp-faded" aria-current="page" href="{% url 'manageTeach' %}">Record</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active bg-main shadow-sm fw-bold" href="{% url 'newTeach' %}">New Teacher</a>
+        </li>
+          <li class="nav-item">
+              <a class="nav-link txt-main1 bg-purp-faded2" href="{% url 'resetPassTeach' %}">Reset Password</a>
+          </li>
+        
+    </ul>
+
+    <div class="pt-2">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>There were errors in your form:</strong>
+                    <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}</strong>: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="p-2 overflow-auto rounded mb-3 " style="max-height: 440px;">
+                    <!-- Professional Assignment -->
+                    <div class="p-3 mb-4 rounded bg-white shadow txt-main">
+                        <label class="fw-bold mb-3 fs-5">Assigned Class</label>
+                        <div class="row txt-org fw-bold">
+                            <div class="col-md-4 mb-3">{{ form.intake.label_tag }} {{ form.intake|add_class:"form-select" }}</div>
+                            
+                            {% comment %} <div class="col-md-4 mb-3">
+                              {{ form.form_level.label_tag }} 
+                              {{ form.form_level }}
+                            </div> {% endcomment %}
+
+                            <div class="col-md-4 mb-3">
+                                <label for="assigned-class">Assigned Class</label>
+                                <select name="assigned_class" id="assigned-class" class="form-select">
+                                    <option value="">-- Select Class --</option>
+                                    {% for classroom in classrooms %}
+                                        <option value="{{ classroom.id }}" data-form="{{ classroom.form_level }}"
+                                            {% if form.instance.assigned_class and form.instance.assigned_class.id == classroom.id %}selected{% endif %}>
+                                            {{ classroom.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Basic Information -->
+                    <div class="p-3 mb-4 rounded bg-white shadow txt-main">
+                        <label class="fw-bold mb-3 fs-5">Personal Information</label>
+                        <div class="row txt-org fw-bold">
+                            <div class="col-md-4 mb-3">{{ form.profile_picture.label_tag }} {{ form.profile_picture|add_class:"form-control" }}</div>
+                            <div class="col-md-4 mb-3">{{ form.name.label_tag }} {{ form.name|add_class:"form-control" }}</div>
+                            <div class="col-md-4 mb-3">{{ form.race.label_tag }} {{ form.race|add_class:"form-select" }}</div>
+                            <div class="col-md-4 mb-3">{{ form.gender.label_tag }} {{ form.gender|add_class:"form-select" }}</div>
+                            <div class="col-md-4 mb-3">{{ form.ic_number.label_tag }} {{ form.ic_number|add_class:"form-control" }}</div>
+                            <div class="col-md-4 mb-3">{{ form.age.label_tag }} {{ form.age|add_class:"form-control" }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="p-3 mb-4 rounded bg-main-faded bg-white shadow txt-main">
+                        <label class="fw-bold mb-3 fs-5">Contact Information</label>
+                        <div class="row txt-org fw-bold">
+                            <div class="col-md-6 mb-3">{{ form.email.label_tag }} {{ form.email|add_class:"form-control" }}</div>
+                            <div class="col-md-6 mb-3">{{ form.phone_number.label_tag }} {{ form.phone_number|add_class:"form-control" }}</div>
+                        </div>
+                        <div class="mb-3 txt-org fw-bold">{{ form.address.label_tag }} <span style="height: 20px;">{{ form.address|add_class:"form-control" }}<span></div>
+                    </div>
+                        <!-- Subjects (Full Width) -->
+                    <div class="p-3 rounded bg-main-faded bg-white shadow">     
+                          <label class="fw-bold txt-main mb-3 fs-5">Assigned Subject</label>
+                          <div id="subject-container" class="fw-bold txt-org"></div>
+                          <button type="button" class="btn btn-sm btn-warning fw-bold mt-2" id="add-subject">+ Add Subject</button>
+                    </div>
+
+                    <!-- Login Details -->
+                    <div class="p-3 mt-4 mb-3 rounded bg-main-faded bg-white shadow txt-main">
+                        <label class="fw-bold mb-3 fs-5">Login Details</label>
+                        <div class="row txt-org fw-bold">
+                            <div class="col-md-4 mb-3">{{ form.username.label_tag }} {{ form.username|add_class:"form-control" }}</div>
+                            <div class="col-md-4 mb-3">{{ form.password.label_tag }} {{ form.password|add_class:"form-control" }}</div>
+                            <div class="col-md-4 mb-3">{{ form.confirm_password.label_tag }} {{ form.confirm_password|add_class:"form-control" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Submit Button -->
+                <button type="submit" class="btn btnMain">Register</button>
+                <!-- Success Modal -->
+                    <div class="modal" tabindex="-1" id="successModal">
+                        <div class="modal-dialog">
+                        <div class="modal-content border-success">
+                            <div class="modal-header">
+                            <h5 class="modal-title text-success">🎉 Registration Successful</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                            <p>The teacher has been successfully registered and saved to the system!</p>
+                            </div>
+                            <div class="modal-footer">
+                            <button type="button" class="btn btnMain" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+            </form>
+    </div>
+
+    {% comment %} <script>
+        const subjectOptionsByForm = {
+          {% for level in form_levels %}
+            "{{ level }}": [
+              {% for subject in subjects %}
+                {% if subject.form_level == level %}
+                  { id: "{{ subject.id }}", name: "{{ subject.name }}" },
+                {% endif %}
+              {% endfor %}
+            ],
+          {% endfor %}
+        };
+      </script>
+    <h6>TEST output</h6>
+    <p>Form levels: {{ form_levels }}</p>
+    <p>Subjects: {{ subjects }}</p>  {% endcomment %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // ========== Subject Handling ==========
+  let subjectIndex = 0;
+
+  const subjectOptionsByForm = {
+    {% for level in form_levels %}
+      "{{ level }}": [
+        {% for subject in subjects %}
+          {% if subject.form_level == level %}
+            { id: "{{ subject.id }}", name: "{{ subject.name }}" },
+          {% endif %}
+        {% endfor %}
+      ],
+    {% endfor %}
+  };
+
+  function createSubjectRow(index) {
+    const row = document.createElement("div");
+    row.classList.add("row", "mb-2", "subject-group");
+
+    row.innerHTML = `
+      <div class="col-md-4">
+        <label>Form Level</label>
+        <select class="form-select form-level" data-index="${index}">
+          {% for level in form_levels %}
+            <option value="{{ level }}">{{ level }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label>Subject</label>
+        <select name="subject_${index}" class="form-select subject-select"></select>
+      </div>
+
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="button" class="btn btn-danger remove-subject">−</button>
+      </div>
+    `;
+    return row;
+  }
+
+  function updateSubjectDropdown(row, formLevel) {
+    const subjectSelect = row.querySelector(".subject-select");
+    const subjects = subjectOptionsByForm[formLevel] || [];
+
+    subjectSelect.innerHTML = "";
+    subjects.forEach(sub => {
+      const option = document.createElement("option");
+      option.value = sub.id;
+      option.textContent = sub.name;
+      subjectSelect.appendChild(option);
+    });
+  }
+
+  const container = document.getElementById("subject-container");
+
+  function addSubjectRow() {
+    const row = createSubjectRow(subjectIndex);
+    container.appendChild(row);
+    updateSubjectDropdown(row, "Form 1"); // default
+    subjectIndex++;
+  }
+
+  document.getElementById("add-subject").addEventListener("click", addSubjectRow);
+
+  container.addEventListener("change", function (e) {
+    if (e.target.classList.contains("form-level")) {
+      const formLevel = e.target.value;
+      const row = e.target.closest(".subject-group");
+      updateSubjectDropdown(row, formLevel);
+    }
+  });
+
+  container.addEventListener("click", function (e) {
+    if (e.target.classList.contains("remove-subject")) {
+      e.target.closest(".subject-group").remove();
+    }
+  });
+
+  // Initialize with one subject row
+  addSubjectRow();
+
+  // ========== Assigned Class Filtering ==========
+  const formLevelField = document.querySelector("select[name='form_level']");
+  const classSelect = document.getElementById("assigned-class");
+
+  if (formLevelField && classSelect) {
+    formLevelField.addEventListener("change", function () {
+      const selectedLevel = this.value;
+
+      Array.from(classSelect.options).forEach(option => {
+        const optionLevel = option.getAttribute("data-form");
+
+        if (!selectedLevel || option.value === "" || optionLevel === selectedLevel) {
+          option.style.display = "block";
+        } else {
+          option.style.display = "none";
+        }
+      });
+
+      classSelect.value = "";
+    });
+
+    formLevelField.dispatchEvent(new Event("change")); // auto-trigger
+  }
+});
+</script>
+
+{% if success %}
+    <script>
+      window.addEventListener("load", () => {
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+      });
+    </script>
+{% endif %}    
+
+{% endblock %}
+
+
+

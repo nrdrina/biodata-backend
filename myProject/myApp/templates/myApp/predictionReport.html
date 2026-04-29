@@ -1,0 +1,129 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block template %}
+<div class="main p-4">
+
+  <form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+      <label class="form-label txt-main2 fw-semibold">Intake</label>
+      <select class="form-select shadow-sm fw-bold" name="intake" onchange="this.form.submit()">
+        <option value="">-- Select Intake --</option>
+        {% for intake in all_intakes %}
+          <option value="{{ intake }}" {% if intake == intake_filter %}selected{% endif %}>{{ intake }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label txt-main2 fw-semibold">Exam Type</label>
+      <select class="form-select shadow-sm fw-bold" name="exam_type" onchange="this.form.submit()">
+        <option value="">-- Select Exam Type --</option>
+        {% for exam in all_exams %}
+          <option value="{{ exam }}" {% if exam == exam_type %}selected{% endif %}>{{ exam }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6"></div>
+  </form>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card shadow-lg border-0 rounded-4 h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title txt-main fw-bold mb-3">Risk Distribution by Class</h5>
+          <p class="text-warning fw-bold small mb-2">Shows how many students in each class are at risk vs. not at risk.</p>
+          <div class="d-flex justify-content-center align-items-center" style="height: 280px;">
+            <canvas id="classRiskPie" style="max-width: 100%; max-height: 100%;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-lg border-0 rounded-4 h-100">
+        <div class="card-body text-center">
+          <h5 class="card-title txt-main fw-bold mb-3">Risk Factor Trends</h5>
+          <p class="text-warning small mb-2">Number of students with each risk factor by exam.</p>
+          <div style="height: 280px;">
+            {% if exam_labels %}
+              <canvas id="riskFactorsLine"></canvas>
+            {% else %}
+              <div class="d-flex h-100 w-100 align-items-center justify-content-center">
+                <span class="text-muted">Select intake and exam type to view trends.</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const classRiskCtx = document.getElementById('classRiskPie').getContext('2d');
+  new Chart(classRiskCtx, {
+    type: 'pie',
+    data: {
+      labels: {{ class_labels|safe }},
+      datasets: [{
+        data: {{ class_values|safe }},
+        backgroundColor: ['#8a21e7', '#d43de8', '#e83dbd', '#d72b6d', '#d72b48']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+{% if exam_labels %}
+const lineCtx = document.getElementById('riskFactorsLine').getContext('2d');
+new Chart(lineCtx, {
+  type: 'line',
+  data: {
+    labels: {{ exam_labels|safe }},
+    datasets: [
+        {
+          label: "Limited Study Time",
+          data: {{ limited_study_time_counts|safe }},
+          borderColor: "#ff6384",
+          fill: false
+        },
+        {
+          label: "No Family Support",
+          data: {{ no_family_support_counts|safe }},
+          borderColor: "#36a2eb",
+          fill: false
+        },
+        {
+          label: "Weak Family Relationship",
+          data: {{ weak_family_relationship_counts|safe }},
+          borderColor: "#4bc0c0",
+          fill: false
+        },
+        {
+          label: "Poor Health Condition",
+          data: {{ poor_health_condition_counts|safe }},
+          borderColor: "#ffce56",
+          fill: false
+        }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        stepSize: 1,
+        title: {
+          display: true,
+          text: 'Number of Students'
+        }
+      }
+    }
+  }
+});
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Grade Performance{% endblock %}
+
+{% block template %}
+<div class="main container p-3">
+<h3 class="mb-3">Grade Performance per Subject</h3>
+
+
+<div class="d-flex justify-content-between align-items-end flex-wrap mb-4">
+  
+    
+    <form method="get" class="row g-3">
+      <div class="col-md-2">
+        <select name="intake" class="form-select shadow-sm">
+          <option value="">-- All Intakes --</option>
+          {% for year in intakes %}
+            <option value="{{ year }}" {% if year == selected_intake %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="form_level" class="form-select shadow-sm" >
+          <option value="">-- All Forms --</option>
+          {% for level in form_levels %}
+            <option value="{{ level }}" {% if level == selected_level %}selected{% endif %}>{{ level }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="class_id" class="form-select shadow-sm">
+          <option value="">-- All Classes --</option>
+          {% for cls in classes %}
+            <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class %}selected{% endif %}>{{ cls.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="exam_type" class="form-select shadow-sm">
+          <option value="">-- All Exams --</option>
+          {% for exam in exams %}
+            <option value="{{ exam }}" {% if exam == selected_exam %}selected{% endif %}>{{ exam }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btnPink w-100 shadow-sm">Apply Filters</button>
+      </div>
+    </form>
+
+  
+    <form method="get" action="{% url 'export_grade_performance_pdf' %}" class="ms-3 d-flex align-items-end">
+      <input type="hidden" name="intake" value="{{ selected_intake }}">
+      <input type="hidden" name="form_level" value="{{ selected_level }}">
+      <input type="hidden" name="class_id" value="{{ selected_class }}">
+      <input type="hidden" name="exam_type" value="{{ selected_exam }}">
+      <button type="submit" class="btn btn-sm btnMain rounded-5 shadow" title="Download">
+        <i class="fa fa-download" aria-hidden="true"></i>
+      </button>
+    </form>
+</div>
+
+
+<div class="p-1 rounded" style="max-height: 480px; overflow-y: auto; overflow-x: hidden;">
+  {% if data %}
+  <!-- Charts Container -->
+  <div class="row">
+    {% for subject in data %}
+    <div class="col-md-6 mb-2">
+        <div class="card shadow">
+        <div class="card-body">
+            <h6 class="card-title txt-main fw-bold">{{ subject.subject }}</h6>
+            <label class="small text-primary fw-bold">Number of Students: <strong>{{ subject.total }}</strong></label>  <!-- FIXED HERE -->
+            <canvas id="chart-{{ forloop.counter }}"></canvas>
+        </div>
+        </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="text-muted">No data available for the selected filters.</p>
+  {% endif %}
+</div>
+</div>
+
+<!-- Chartjs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const gradeColors = {{ grade_colors|safe }};
+  const chartData = {{ data_json|safe }};
+
+  chartData.forEach((subject, index) => {
+  const labels = Object.keys(subject.grades);
+  const values = Object.values(subject.grades);
+
+  // Map grade to color for this subject
+  const backgroundColors = labels.map(grade => gradeColors[grade] || "#eee");
+
+  const ctx = document.getElementById(`chart-${index + 1}`).getContext('2d');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Number of Students',
+        data: values,
+        backgroundColor: backgroundColors,
+        borderColor: backgroundColors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      scales: {
+        x: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Students'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Grade'
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.raw} student(s)`
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}
